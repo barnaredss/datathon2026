@@ -23,6 +23,7 @@ import numpy as np
 
 try:
     from scipy.optimize import linprog
+    from scipy.special import ndtri
     _HAVE_LP = True
 except Exception:  # sin scipy: política de respaldo
     _HAVE_LP = False
@@ -39,6 +40,13 @@ class BatteryAgent:
     H = 24                  # horizonte de planificación (horas)
     N_TOTAL = 2016          # horas del test: permite vaciar la batería al final
     BLOCK_HOURS = 168       # el test son semanas completas
+    NEWSVENDOR = True       # ajusta la consigna de la hora actual a la incertidumbre de la demanda neta
+    NV_DISCHARGE = True
+    NV_CHARGE = False
+    Z_MARGINAL = 0.5        # margen (en sigmas) al descargar en una hora marginal
+    SIG0 = 60.0             # desviación típica (kW) del error de demanda neta de la hora actual, de día
+    SIG_NIGHT = 5.0         # ídem de noche (el contador repite el valor nocturno)
+    SIG_PV = 0.25           # parte del error proporcional a la solar prevista
     USE_RIDGE = True        # previsión de precio y CO2 por regresión (si no, perfil reescalado)
     PV_UNCERT = 0.3         # fracción de la solar prevista que se resta al tope de descarga actual
     SURPLUS_BUFFER = 0.0    # kW extra de carga cuando se prevé excedente solar en la hora actual
@@ -70,6 +78,9 @@ class BatteryAgent:
             self.r_icpt_c = np.asarray(rg["icpt_c"], dtype=float)
         self.n = -1                 # índice de fila (hora) actual
         self.block_start = 0        # fila en la que empezó la semana actual
+        self.hist_start = 0         # primera fila con historia utilizable (puede ser anterior a la semana)
+        self.prehist = p.get("prehist") or {}
+        self._new_block = False
         self.block_month = 1
         self.ts = None
         self.price, self.co2, self.load, self.pv = {}, {}, {}, {}
@@ -91,10 +102,32 @@ class BatteryAgent:
         if self.ts is not None:
             gap = (ts - self.ts).total_seconds() / 3600.0
             new_block = gap > 2.5 or gap < 0.0
+        self._new_block = new_block
         if new_block:
             self.block_start = self.n
+            self.hist_start = self.n
             self.block_month = ts.month
         self.ts = ts
+
+    def _load_prehist(self):
+        """Al empezar una semana de test, recupera las 48 h anteriores del año de entrenamiento.
+
+        Las semanas de test son la última de cada mes y el entrenamiento llega hasta el día anterior,
+        así que "ayer" y "anteayer" son datos oficiales conocidos (precio, CO2, demanda y solar).
+        """
+        j = 1
+        while j <= 48:
+            v = self.prehist.get((self.ts - timedelta(hours=j)).strftime("%Y-%m-%d %H"))
+            if v is None:
+                break
+            row = self.n - j
+            self.price[row], self.co2[row] = float(v[0]), float(v[1])
+            if v[2] is None:
+                self.load.pop(row, None); self.pv.pop(row, None)
+            else:
+                self.load[row], self.pv[row] = float(v[2]), float(v[3]) * self.PV_SCALE
+            j += 1
+        self.hist_start = self.n - (j - 1)
 
     def _block_end(self):
         """Primera fila de la semana siguiente. Si la semana dura más de lo previsto, se alarga."""
@@ -116,7 +149,7 @@ class BatteryAgent:
         """Nivel observado / perfil, para precio y CO2, en las últimas horas conocidas de la semana."""
         end = self._block_end()
         sp = sc = cp = cc = 0.0
-        for r in range(max(self.block_start, self.n - self.LEVEL_WINDOW + 3), min(self.n + 3, end)):
+        for r in range(max(self.hist_start, self.n - self.LEVEL_WINDOW + 3), min(self.n + 3, end)):
             if r in self.price:
                 t = self.ts + timedelta(hours=r - self.n)
                 mo, dt, h = self.block_month - 1, int(t.weekday() >= 5), t.hour
@@ -137,7 +170,7 @@ class BatteryAgent:
         misma hora de ayer y de anteayer, y el cambio hoy-ayer ya observado. Los coeficientes se
         ajustaron con el año de entrenamiento (tools/hard.py::fit_signal_ridge).
         """
-        n, b0 = self.n, self.block_start
+        n, b0 = self.n, self.hist_start
         end = self._block_end()
         known = [j for j in (n, n + 1, n + 2) if j in self.price and j < end]
         top = known[-1]                              # última fila conocida dentro de la semana
@@ -185,7 +218,7 @@ class BatteryAgent:
         cnt = 0
         for j in range(self.n, self.n + 3):
             y = j - 24
-            if j in self.price and j < end and y >= self.block_start and y in self.price:
+            if j in self.price and j < end and y >= self.hist_start and y in self.price:
                 dp += self.price[j] - self.price[y]; dc += self.co2[j] - self.co2[y]; cnt += 1
         if cnt:
             dp, dc = dp / cnt, dc / cnt
@@ -200,7 +233,7 @@ class BatteryAgent:
                 if r < end:
                     p, c = p * lp, c * lc
                     y = r - 24
-                    if y >= self.block_start and y in self.price:
+                    if y >= self.hist_start and y in self.price:
                         b = self.BETA_SIGNAL
                         g = self.GAMMA * self.DECAY ** (k - 2)
                         p = (1 - b) * p + b * max(0.0, self.price[y] + g * dp)
@@ -213,7 +246,7 @@ class BatteryAgent:
         num = den = 0.0
         used = 0
         last = None
-        for r in range(self.n - 1, max(self.block_start, self.n - 30) - 1, -1):
+        for r in range(self.n - 1, max(self.hist_start, self.n - 30) - 1, -1):
             if r in self.pv and used < 6:
                 t = self.ts + timedelta(hours=r - self.n)
                 prof = self.p_pv[self.block_month - 1][t.hour] * self.PV_SCALE
@@ -229,7 +262,7 @@ class BatteryAgent:
         end = self._block_end()
         clear_avg, clear_last = self._clearness()
         last = self.n - 1 if self.n > 0 else 0
-        have_last = last in self.load and (last >= self.block_start or self.n == 0)
+        have_last = last in self.load and (last >= self.hist_start or self.n == 0)
         mean_week = float(self.p_load.mean())
         net = np.empty(m)
         for k in range(m):
@@ -241,7 +274,7 @@ class BatteryAgent:
                 ref = self.p_load[tl.weekday() * 24 + tl.hour]
                 load = self.load[last] * self.p_load[widx] / ref
                 y = r - 24
-                if self.BETA_LOAD > 0 and y >= self.block_start and y in self.load:
+                if self.BETA_LOAD > 0 and y >= self.hist_start and y in self.load:
                     load = (1 - self.BETA_LOAD) * load + self.BETA_LOAD * self.load[y]
             else:
                 load = clim
@@ -278,6 +311,8 @@ class BatteryAgent:
             row = n - 1 if n > 0 else 0
             self.load[row] = float(nd["ultim_consum_kw"])
             self.pv[row] = float(nd.get("ultima_solar_kw", 0.0))
+        if self._new_block:
+            self._load_prehist()
 
         m = self.H
         if known < 3:                       # el simulador avisa del final: quedan `known` horas
@@ -289,11 +324,13 @@ class BatteryAgent:
         # Hora actual: prudencia al descargar (verter a red se pierde entero)
         last = n - 1
         net0 = net[0]
-        if last >= self.block_start and last in self.load:
+        if last >= self.hist_start and last in self.load:
             net0 = min(net0, self.load[last] - self.pv[last])
         d_cap = np.minimum(self.pmax, np.maximum(0.0, net))
         # margen mayor cuanto más sol se espera: la solar es lo más incierto de la hora actual
         d_cap[0] = min(self.pmax, max(0.0, net0 * self.DISCHARGE_MARGIN - self.PV_UNCERT * self._pv0))
+        if self.NEWSVENDOR and self.NV_DISCHARGE:
+            d_cap[0] = min(self.pmax, max(0.0, net[0]))
 
         soc = float(obs["soc_kwh"])
         a_eq, a_ub = self._matrices(m)
@@ -306,11 +343,48 @@ class BatteryAgent:
         if res.x is None or res.status != 0:
             raise RuntimeError("LP sin solución")
         action = float(res.x[0] - res.x[m])
+        if self.NEWSVENDOR:
+            return self._newsvendor(action, res, w[0], net[0], d_cap[0], m)
         # Excedente solar previsto: cargar algo más de lo estimado (si sobra sol y no se carga, se pierde;
         # si falta sol, se importa a la señal baja del mediodía)
         if net[0] < self.SURPLUS_BUFFER and action >= 0:
             action = max(action, min(self.pmax, max(0.0, -net[0]) * self.SURPLUS_BOOST + self.SURPLUS_BUFFER))
         return action
+
+    def _newsvendor(self, a_lp, res, w0, n_hat, d_cap0, m):
+        """Consigna de la hora actual con demanda neta incierta (problema del vendedor de periódicos).
+
+        La consigna es fija durante la hora, pero la demanda neta real no se conoce. Descargar de más
+        se vierte a red y se pierde; descargar de menos deja energía sin usar. Si mu es el valor del kWh
+        almacenado (dual del LP) y w0 la señal de esta hora, lo óptimo es descargar hasta el cuantil
+        1 - mu/(eta*w0) de la demanda neta, y absorber excedente solar hasta el cuantil mu*eta/w0.
+        """
+        try:
+            mu = max(0.0, -float(res.eqlin.marginals[1])) if m > 1 else 0.0
+        except Exception:
+            return a_lp
+        h = self.ts.hour
+        night = self._pv0 < 1.0 and (h >= 22 or h <= 5)
+        sigma = (self.SIG_NIGHT if night else self.SIG0) + self.SIG_PV * self._pv0
+        if w0 <= 0:
+            return a_lp
+        if a_lp < -1e-6:                                   # el LP descarga
+            if not self.NV_DISCHARGE:
+                return a_lp
+            ratio = mu / (self.ETA * w0)
+            if -a_lp >= d_cap0 - 1e-6:                     # limitado por la demanda: cuantil óptimo
+                q = min(0.999, max(0.001, 1.0 - ratio))
+                return -min(self.pmax, max(0.0, n_hat + sigma * float(ndtri(q))))
+            return -min(-a_lp, max(0.0, n_hat - self.Z_MARGINAL * sigma))   # limitado por energía
+        if not self.NV_CHARGE:
+            return a_lp
+        ratio_c = mu * self.ETA / w0
+        if ratio_c >= 1.0:                                 # compensa cargar de red: decide el LP
+            return a_lp
+        c_nv = -n_hat + sigma * float(ndtri(min(0.999, max(0.001, ratio_c))))
+        if a_lp > max(0.0, -n_hat) + 1e-6:                 # el LP ya carga más que el excedente
+            return max(a_lp, min(self.pmax, c_nv))
+        return max(0.0, min(self.pmax, c_nv))              # absorber excedente incierto
 
     def _fallback(self, obs):
         """Sin solver: cargar al mediodía, descargar por la tarde-noche sin superar la demanda neta."""

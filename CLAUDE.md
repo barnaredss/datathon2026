@@ -54,9 +54,14 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
 - Method: 24 h LP on FORECAST signal, demand and solar. Price/CO2 beyond 3 h: ridge regression per lead
   on ratios to a month×daytype×hour climatology. Demand: last value × weekly profile. Solar: monthly
   profile × observed clearness. Current-hour discharge is capped conservatively (exports are lost).
-- Status: pseudo-test 20.58 vs ceiling 22.28 (92.3 %). With a perfect signal forecast: +0.8; with the
-  true current-hour net demand: +1.0. Tried without gain: longer horizon, terminal value, planning
-  with lower efficiency, surplus buffers, LightGBM instead of ridge, yesterday-blend climatology.
+- Status (hard_v3): pseudo-test 20.68 vs ceiling 22.28 (92.8 %). Remaining gap, measured with oracles:
+  perfect signal forecast +0.65; true CURRENT-hour net demand +0.62 (knowing later hours adds nothing);
+  both together 98.5 %. Each test week is seeded with the last 48 training hours (`PROFILES["prehist"]`:
+  the train set ends the day before every test week). Current-hour discharge uses a newsvendor quantile
+  from the LP dual (`_newsvendor`); the same rule for charging made things worse and is off.
+- Tried without gain: longer horizon, terminal value, planning with lower efficiency, surplus buffers,
+  LightGBM instead of ridge for price/CO2, yesterday-blend climatology. Offline, the solar nowcast MAE is
+  114 kW with last-hour clearness and 92 kW with LightGBM on all telemetry (not integrated; worth ~+0.1).
 - Local pseudo-test profiles are fitted out of sample; always check `fallbacks=0` in the output.
 
 ## Hard rules

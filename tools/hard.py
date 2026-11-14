@@ -94,6 +94,14 @@ def compute_profiles(df, pk):
     b = np.maximum(df["load_kw"] - PV_SCALE * df["pv_kw"], 0.0)
     out["lambda"] = round(float((0.3 / 0.7) * (b * df["co2_kg_per_kwh"]).sum() / (b * df["precio_eur_per_kwh"]).sum()), 4)
     out["ridge"] = fit_signal_ridge(pk, out)
+    pre = {}                                  # last 48 h of each month: history for the day before a test week
+    for _, g in pk.groupby(pk.index.to_period("M")):
+        for ts, row in g.iloc[-48:].iterrows():
+            has = ts in df.index
+            pre[ts.strftime("%Y-%m-%d %H")] = [round(float(row.precio_eur_per_kwh), 5), round(float(row.co2_kg_per_kwh), 5),
+                                               round(float(df.at[ts, "load_kw"]), 1) if has else None,
+                                               round(float(df.at[ts, "pv_kw"]), 2) if has else None]
+    out["prehist"] = pre
     return out
 
 

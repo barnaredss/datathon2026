@@ -9,7 +9,8 @@ Public board on Sat 18:30: 16 teams, record 23.23, most between 21 and 23.
 |---|------|-----|-------------------|-----------------------------------|--------------|--------|---------|-------|-------|
 | h0 | pending | hard_v0 | 19.54 | 22.28 | | | | | climatology forecasts; superseded |
 | h1 | pending | hard_v1 | 20.51 | 22.28 | | | | | + ridge forecaster for price/CO2, discharge margin, optimistic PV |
-| h2 | pending | hard_v2 | 20.58 | 22.28 | | | | | + discharge margin that grows with expected solar. Upload this one |
+| h2 | not uploaded | hard_v2 | 20.58 | 22.28 | | | | | + discharge margin that grows with expected solar; superseded |
+| h3 | pending | hard_v3 | 20.68 | 22.28 | | | | | + last 48 training hours as starting history for each test week; quantile rule for the current-hour discharge. Upload this one |
 
 ## Standard mode
 

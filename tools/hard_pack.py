@@ -20,7 +20,7 @@ def main():
     lines = ["# Perfiles calculados con el año de entrenamiento oficial (data/train); ver tools/hard.py",
              "PROFILES = {"]
     for k, v in prof.items():
-        lines.append("    %s: %s," % (json.dumps(k), json.dumps(v)))
+        lines.append("    %s: %r," % (json.dumps(k), v))
     lines.append("}")
     out = ROOT / "submissions" / tag
     out.mkdir(parents=True, exist_ok=True)
