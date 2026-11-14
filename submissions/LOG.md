@@ -1,5 +1,21 @@
 # Submission log
 
+## Hard mode (Mode Difícil — separate board and quota: 10 per shift)
+
+Battery 6,000 kWh / ±1,500 kW, PV x12, 3 h of price/CO2 in obs. Local = `python -m tools.hard`.
+Public board on Sat 18:30: 16 teams, record 23.23, most between 21 and 23.
+
+| # | Time | Tag | Local pseudo-test | Local ceiling (perfect foresight) | Public score | ΔCO2 % | ΔCost % | Infr. | Notes |
+|---|------|-----|-------------------|-----------------------------------|--------------|--------|---------|-------|-------|
+| h0 | pending | hard_v0 | 19.54 | 22.28 | | | | | climatology forecasts; superseded |
+| h1 | pending | hard_v1 | 20.51 | 22.28 | | | | | + ridge forecaster for price/CO2, discharge margin, optimistic PV |
+| h2 | pending | hard_v2 | 20.58 | 22.28 | | | | | + discharge margin that grows with expected solar. Upload this one |
+
+## Standard mode
+
+Final selection: the jury scores exactly 2 submissions per team on the private half. Mark them in the
+submission tab ("Selecció Oficial per al Jurat"): v3_load_aware and v2_meter_guard.
+
 Paste the leaderboard result row after every upload. Never re-submit an equal agent.
 
 | # | Time | Tag | Local train-full | Local pseudo-test | Public score | ΔCO2 % | ΔCost % | CO2 kg | € | Infr. | Notes |

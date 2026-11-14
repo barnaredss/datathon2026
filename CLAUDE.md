@@ -42,6 +42,23 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
   until the humans report how the final ranking is computed (private half or full test; which submission).
 - Findings so far live in `analysis/eda_findings.md`, `strategy_findings.md`, `outage_findings.md`.
 
+## Hard mode (added by the organisers Saturday afternoon — the live competition)
+- Separate tab, board and quota. Battery 6,000 kWh / ±1,500 kW (start 3,000 kWh), PV x12 (real midday
+  surplus, free to store; exports still earn nothing), obs price/CO2 vectors only 3 long (current hour + 2),
+  `obs["noves_dades_5min"]` adds last-hour weather, obs has `cap_max_kwh` and `power_max_kw`.
+- New rule (both modes): the jury scores exactly 2 submissions per team on the private half; teams mark
+  them in the submission tab, default = the two best public ones.
+- Code: `agent_hard/agent.py` (source, `PROFILES` marker), `tools/hard.py` (simulator `HardEnv`, perfect-
+  foresight bound, profile + ridge fit, `python -m tools.hard` evaluates), `tools/hard_pack.py <tag>`
+  freezes a single-file submission with profiles from the full train set.
+- Method: 24 h LP on FORECAST signal, demand and solar. Price/CO2 beyond 3 h: ridge regression per lead
+  on ratios to a month×daytype×hour climatology. Demand: last value × weekly profile. Solar: monthly
+  profile × observed clearness. Current-hour discharge is capped conservatively (exports are lost).
+- Status: pseudo-test 20.58 vs ceiling 22.28 (92.3 %). With a perfect signal forecast: +0.8; with the
+  true current-hour net demand: +1.0. Tried without gain: longer horizon, terminal value, planning
+  with lower efficiency, surplus buffers, LightGBM instead of ridge, yesterday-blend climatology.
+- Local pseudo-test profiles are fitted out of sample; always check `fallbacks=0` in the output.
+
 ## Hard rules
 - Official data only. Never embed real test-period prices/CO2/weather or any external data in the agent.
 - The submitted agent may import only: numpy, pandas, scipy, scikit-learn, joblib, xgboost, lightgbm, math,

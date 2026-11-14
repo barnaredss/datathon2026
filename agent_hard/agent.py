@@ -33,12 +33,14 @@ PROFILES = None  # __PROFILES__
 class BatteryAgent:
     ETA = 0.9 ** 0.5
     EPS = 1e-4
+    ETA_PLAN = 0.9 ** 0.5   # rendimiento usado al planificar (menor = exige más margen para ciclar)
     SCALE = 10.0            # lleva la señal a O(1) para el solver
     PV_SCALE = 12.0         # el perfil solar de entrenamiento se multiplica por 12
     H = 24                  # horizonte de planificación (horas)
     N_TOTAL = 2016          # horas del test: permite vaciar la batería al final
     BLOCK_HOURS = 168       # el test son semanas completas
     USE_RIDGE = True        # previsión de precio y CO2 por regresión (si no, perfil reescalado)
+    PV_UNCERT = 0.3         # fracción de la solar prevista que se resta al tope de descarga actual
     SURPLUS_BUFFER = 0.0    # kW extra de carga cuando se prevé excedente solar en la hora actual
     BETA_SIGNAL = 0.5       # peso de "misma hora de ayer" en la previsión de precio y CO2
     GAMMA = 0.0             # cuánto del cambio hoy-ayer ya observado se traslada a las horas siguientes
@@ -249,13 +251,15 @@ class BatteryAgent:
                 clear = a * clear_last + (1 - a) * clear_avg
             pv = self.p_pv[mo][h] * self.PV_SCALE * (clear if r < end else 1.0) * self.PV_FACTOR
             net[k] = load - pv
+            if k == 0:
+                self._pv0 = pv
         return net
 
     # ------------------------------------------------------------------ optimización
     def _matrices(self, m):
         if m not in self._lp:
             eye, zero = np.eye(m), np.zeros((m, m))
-            a_eq = np.concatenate([-self.ETA * eye, eye / self.ETA, zero, eye - np.eye(m, k=-1)], axis=1)
+            a_eq = np.concatenate([-self.ETA_PLAN * eye, eye / self.ETA_PLAN, zero, eye - np.eye(m, k=-1)], axis=1)
             a_ub = np.concatenate([eye, -eye, -eye, zero], axis=1)   # c - d - g <= -net
             self._lp[m] = (a_eq, a_ub)
         return self._lp[m]
@@ -288,7 +292,8 @@ class BatteryAgent:
         if last >= self.block_start and last in self.load:
             net0 = min(net0, self.load[last] - self.pv[last])
         d_cap = np.minimum(self.pmax, np.maximum(0.0, net))
-        d_cap[0] = min(self.pmax, max(0.0, net0 * self.DISCHARGE_MARGIN))
+        # margen mayor cuanto más sol se espera: la solar es lo más incierto de la hora actual
+        d_cap[0] = min(self.pmax, max(0.0, net0 * self.DISCHARGE_MARGIN - self.PV_UNCERT * self._pv0))
 
         soc = float(obs["soc_kwh"])
         a_eq, a_ub = self._matrices(m)
