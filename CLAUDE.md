@@ -19,9 +19,14 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
   So the battery never exports and load/PV forecasting is worth ~0. The task is pure arbitrage.
 - The score is linear in grid imports, so it collapses to ONE signal: `w = co2 + LAMBDA_PRICE * price`
   with `LAMBDA_PRICE = (0.3/0.7) * CO2_base / Cost_base` ≈ 0.2593 (calibrated on public leaderboard data).
-- `agent/agent.py` (v1) = rolling 24 h LP on that signal. Train-full 5.6667 vs perfect-foresight 5.6753;
-  pseudo-test 6.1241 vs 6.1250. 0 infractions, ~4 s per 2,016 steps. We are at the ceiling.
-- Public leaderboard top is 6.43 (ΔCO2 5.97 %, ΔCost 7.50 %) — that is the same ceiling.
+- `agent/agent.py` (v2) = rolling 24 h LP on that signal. Train-full 5.6667 vs perfect-foresight 5.6753;
+  pseudo-test 6.1241 vs 6.1250. 0 infractions, 4–8 s per 2,016 steps. We are at the ceiling.
+- Public leaderboard top is 6.43 (ΔCO2 5.97 %, ΔCost 7.50 %) — the same ceiling. Our v1 scored 6.43.
+- Meter outages: all four sensor files have no data for November 2025; 15 hourly rows have load 0; the
+  meter is frozen every night 22:05–06:00 (one repeated value). v2 adds a guard: when the last measured
+  net load is < 500 kW the LP assumes it persists to the end of the current 168 h block (it detects block
+  starts from timestamp jumps > 2.5 h). Identical to v1 on normal data; see `analysis/outage_findings.md`.
+- Findings so far live in `analysis/eda_findings.md`, `strategy_findings.md`, `outage_findings.md`.
 
 ## Hard rules
 - Official data only. Never embed real test-period prices/CO2/weather or any external data in the agent.

@@ -9,11 +9,13 @@ in reserve (see "Handover"). Deadline: submissions close Sunday 15 Nov between 1
 | ID | Task | Track | Prio | Owner | Status |
 |----|------|-------|------|-------|--------|
 | T0 | Kit, venv, hourly data, eval harness, agent v1 | Agent | P0 | orchestrator | DONE (Sat 13:30) |
-| T1 | Submit v1 to leaderboard, log result | Agent | P0 | **humans** | TODO — do it now |
+| T1 | Submit v1 to leaderboard, log result | Agent | P0 | **humans** | DONE — 6.43 public, 0 infr., 5th on timestamp tie |
 | T2 | Signal and horizon calibration study | Agent | P2 | Sonnet | TODO |
 | T3 | Hardening tests + submission packager | Agent | P2 | Sonnet | TODO |
-| T4 | Data audit + EDA figures | Jury | P1 | Sonnet | TODO |
-| T5 | Strategy evidence figures | Jury | P1 | Sonnet | TODO |
+| T1b | Submit v2 (meter-outage guard), log result | Agent | P0 | **humans** | TODO — `submissions/v2_meter_guard/agent.py` |
+| T4 | Data audit + EDA figures | Jury | P1 | Sonnet | DONE — `analysis/eda_findings.md`, 6 `figures/eda_*` |
+| T5 | Strategy evidence figures | Jury | P1 | Sonnet | DONE — `analysis/strategy_findings.md`, 5 `figures/est_*` |
+| T5b | Meter-outage robustness study + agent v2 | Both | P0 | orchestrator | DONE — `analysis/outage_findings.md` |
 | T6 | What-if study for UPC Sostenible | Jury | P1 | Sonnet | TODO |
 | T7 | Slide deck, pitch script, Q&A sheet (Spanish) | Jury | P1 | Sonnet + orchestrator review | TODO (needs T4–T6) |
 | T8 | Final agent selection, code doc pass, freeze | Agent | P0 | orchestrator | TODO (Sunday) |
@@ -34,6 +36,11 @@ If usage runs short, drop in this order: T3, T2, T6. Never drop T5 or T7.
    to evidence and storytelling: prove optimality, show the data insight that makes forecasting
    unnecessary, and give UPC Sostenible recommendations they can use.
 4. **No leakage, no public-mask overfitting.** Official data only. We do not probe the public/private split.
+5. **The one real edge found so far: meter outages.** Train has no sensor data for all of November and
+   the public baseline is 23–25 % lower per hour than train, so a test week with zero measured demand is
+   plausible. v1 loses 0.02–0.25 points in that case; v2 (current `agent/agent.py`) recovers most of it
+   and is identical to v1 on normal data. v2 is the exception to "never re-submit an equal agent":
+   if the test has such a week we move above the 6.43 pack, if not we stay at 6.43.
 
 ## Submission calendar (30 attempts: 10 per shift; "Validació Ràpida" is free and unlimited)
 
@@ -209,7 +216,9 @@ illustrative assumption. **Done when** as T4.
 
 ## T7 — Deck, pitch and Q&A in Spanish (Sonnet builds, orchestrator reviews, budget ≤ 40 tool calls)
 
-**Inputs.** `analysis/*_findings.md`, `figures/*.png`, `agent/agent.py`, `submissions/LOG.md`.
+**Inputs.** `analysis/*_findings.md` (eda, strategy, outage, whatif, calibration), `figures/*.png`,
+`agent/agent.py`, `submissions/LOG.md`. Slide 8 must include the meter-outage story from
+`analysis/outage_findings.md`: the audit found the November gap, we stress-tested it, v2 is robust.
 
 **Do.** `slides/build_deck.py` (python-pptx, 16:9, content in a Python dict so text edits are one-line) →
 `slides/presentacion.pptx`; `slides/guion.md` (pitch script, ~5 min, per slide, plain spoken Spanish);
