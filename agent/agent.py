@@ -41,7 +41,17 @@ class BatteryAgent:
     SCALE = 10.0              # lleva la señal a O(1) para las tolerancias del solver
     TERMINAL_VALUE = 0.0      # valor del kWh almacenado al final del horizonte (señal escalada)
     BLOCK_HOURS = 168         # el test son semanas completas (7 días seguidos)
-    PERSIST_TO_BLOCK_END = True  # una demanda baja medida se supone persistente hasta fin de semana
+    # Perfil semanal medio de la demanda neta (kW) en el año de entrenamiento: 168 valores,
+    # índice = día_de_la_semana * 24 + hora (lunes = 0). Solo se usa su forma (cocientes).
+    WEEK_PROFILE = (
+        790, 790, 790, 790, 790, 790, 1173, 1250, 1357, 1425, 1479, 1489, 1482, 1439, 1417, 1389, 1385, 1376, 1342, 1297, 1196, 1078, 1051, 1051,
+        1051, 1051, 1051, 1051, 1051, 1051, 1160, 1259, 1383, 1449, 1521, 1511, 1484, 1456, 1436, 1423, 1414, 1398, 1357, 1303, 1202, 1089, 1052, 1052,
+        1054, 1054, 1054, 1054, 1054, 1054, 1164, 1270, 1355, 1421, 1467, 1475, 1448, 1418, 1413, 1386, 1387, 1340, 1310, 1262, 1173, 1063, 1038, 1038,
+        1034, 1034, 1034, 1034, 1034, 1034, 1098, 1212, 1304, 1384, 1452, 1463, 1447, 1412, 1378, 1358, 1349, 1351, 1321, 1279, 1179, 1073, 1037, 1037,
+        1035, 1035, 1035, 1035, 1035, 1035, 1121, 1210, 1282, 1330, 1375, 1384, 1382, 1349, 1289, 1251, 1245, 1253, 1248, 1225, 1158, 1071, 1046, 1046,
+        1043, 1043, 1043, 1043, 1043, 1043, 855, 808, 781, 744, 701, 691, 683, 678, 690, 687, 717, 758, 793, 814, 819, 809, 803, 803,
+        802, 802, 802, 802, 802, 802, 773, 748, 717, 689, 652, 632, 611, 598, 618, 646, 688, 732, 773, 800, 802, 789, 786, 789,
+    )
 
     def __init__(self):
         self._lp_cache = {}   # matrices del LP por longitud de horizonte
@@ -66,20 +76,33 @@ class BatteryAgent:
     def _discharge_caps(self, m, obs):
         """Tope de descarga por hora del horizonte (kW): nunca descargar más que la demanda neta.
 
-        Normalmente la demanda neta supera los 500 kW y el tope no actúa. Si el contador mide una
-        demanda inferior (p. ej. avería del medidor: en los datos de entrenamiento falta todo
-        noviembre y hay horas a 0 kW), suponemos que la situación persiste hasta el final del
-        bloque: así el LP no carga energía que luego no podría entregar al campus.
+        Normalmente la demanda neta supera los 500 kW y el tope no actúa. Cuando no es así (semana
+        de baja actividad, o avería del medidor: en los datos de entrenamiento falta todo noviembre
+        y hay horas a 0 kW), estimamos la demanda neta de cada hora del horizonte escalando la
+        última medida con el perfil semanal medio del año de entrenamiento (WEEK_PROFILE: día de la
+        semana x hora). Así el LP no planifica descargas que el campus no podrá absorber ni carga
+        energía que luego no podría entregar. La estimación solo se aplica dentro de la semana en
+        curso; con demanda normal el resultado es idéntico al del LP sin topes.
         """
         caps = np.full(m, self.P_MAX_KW)
         if self._pos == 0 and self.n_steps > 1:
             return caps          # primera hora de una semana nueva: la última medida es de hace un mes
-        cap0 = min(self.P_MAX_KW, max(0.0, self._net_load_estimate(obs)))
-        if cap0 < self.P_MAX_KW:
-            k_end = m
-            if self.PERSIST_TO_BLOCK_END and self._pos < self.BLOCK_HOURS:
-                k_end = min(m, self.BLOCK_HOURS - self._pos)
-            caps[:max(1, k_end)] = cap0
+        last = max(0.0, self._net_load_estimate(obs))
+        k_end = m
+        if self._pos < self.BLOCK_HOURS:
+            k_end = max(1, min(m, self.BLOCK_HOURS - self._pos))
+        ts = self._prev_ts       # reloj de la hora actual (lo fija _update_clock)
+        if ts is None:           # sin reloj utilizable: persistencia simple de la última medida
+            if last < self.P_MAX_KW:
+                caps[:k_end] = last
+            return caps
+        i0 = ts.weekday() * 24 + ts.hour
+        ref = self.WEEK_PROFILE[(i0 - 1) % 168] if self.n_steps > 1 else self.WEEK_PROFILE[i0 % 168]
+        for k in range(k_end):
+            est = last * self.WEEK_PROFILE[(i0 + k) % 168] / ref
+            if k == 0:
+                est = min(est, last)   # hora actual: prudencia, verter a red se pierde entero
+            caps[k] = min(self.P_MAX_KW, max(0.0, est))
         return caps
 
     # ------------------------------------------------------------------ utilidades
