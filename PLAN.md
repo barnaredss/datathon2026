@@ -16,8 +16,8 @@ in reserve (see "Handover"). Deadline: submissions close Sunday 15 Nov between 1
 | T4 | Data audit + EDA figures | Jury | P1 | Sonnet | DONE — `analysis/eda_findings.md`, 6 `figures/eda_*` |
 | T5 | Strategy evidence figures | Jury | P1 | Sonnet | DONE — `analysis/strategy_findings.md`, 5 `figures/est_*` |
 | T5b | Meter-outage robustness study + agent v2 | Both | P0 | orchestrator | DONE — `analysis/outage_findings.md` |
-| T6 | What-if study for UPC Sostenible | Jury | P1 | Sonnet | IN PROGRESS (started Sat ~14:05) |
-| T7 | Slide deck, pitch script, Q&A sheet (Spanish) | Jury | P1 | Sonnet + orchestrator review | TODO (needs T4–T6) |
+| T6 | What-if study for UPC Sostenible | Jury | P1 | Sonnet | DONE — `analysis/whatif_findings.md`, 5 `figures/whatif_*` |
+| T7 | Slide deck, pitch script, Q&A sheet (Spanish) | Jury | P1 | Sonnet + orchestrator review | IN PROGRESS (started Sat ~14:20) |
 | T8 | Final agent selection, code doc pass, freeze | Agent | P0 | orchestrator | TODO (Sunday) |
 
 Waves: **W1 = T4 + T5** (parallel), **W2 = T6 + T2** (parallel), **W3 = T3**, **W4 = T7**, then T8.
