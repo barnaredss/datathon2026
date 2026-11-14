@@ -59,9 +59,14 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
   both together 98.5 %. Each test week is seeded with the last 48 training hours (`PROFILES["prehist"]`:
   the train set ends the day before every test week). Current-hour discharge uses a newsvendor quantile
   from the LP dual (`_newsvendor`); the same rule for charging made things worse and is off.
+- hard_v4 adds a tree-based nowcast of the CURRENT hour's solar (`PROFILES["pv_gbm"]`, fitted with LightGBM
+  in `tools/hard.py::fit_pv_gbm`, evaluated in pure Python in the agent): pseudo-test 20.80 (93.3 %).
+- Public calibration: hard_v3 = 20.68 local → 23.29 public (rank 5 of 24; top 23.46). Public ≈ 1.126 × local.
 - Tried without gain: longer horizon, terminal value, planning with lower efficiency, surplus buffers,
-  LightGBM instead of ridge for price/CO2, yesterday-blend climatology. Offline, the solar nowcast MAE is
-  114 kW with last-hour clearness and 92 kW with LightGBM on all telemetry (not integrated; worth ~+0.1).
+  LightGBM instead of ridge for price/CO2, ridge per (lead, target hour), yesterday-blend climatology,
+  compressing or expanding forecast spread, price-weight multipliers, newsvendor rule for charging.
+- The agent's dispatch by hour is close to the perfect-foresight plan; the residual is timing noise from
+  forecast error (e.g. it charges at 01:00 where perfect foresight waits for 03:00–04:00).
 - Local pseudo-test profiles are fitted out of sample; always check `fallbacks=0` in the output.
 
 ## Hard rules
