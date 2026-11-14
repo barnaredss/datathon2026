@@ -28,7 +28,10 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
   starts from timestamp jumps > 2.5 h). Identical to v1 on normal data; see `analysis/outage_findings.md`.
   v2 scored exactly like v1 on the public board, so the test has no low-demand periods: present the guard
   as a robustness check, never as a source of score.
-- The leaderboard is saturated: a tie at 6.43, local headroom 0.0009 pts. Do not propose score work.
+- The FULL-test score is saturated (headroom 0.0009 pts). The PUBLIC-half score is not stable: nudging
+  LAMBDA_PRICE within 0.18–0.32 moves a half-test score by 0.14–0.46 while the full score moves 0.01,
+  and it is zero-sum with the private half (`analysis/split_noise_findings.md`). Do not submit λ variants
+  until the humans report how the final ranking is computed (private half or full test; which submission).
 - Findings so far live in `analysis/eda_findings.md`, `strategy_findings.md`, `outage_findings.md`.
 
 ## Hard rules

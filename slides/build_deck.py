@@ -147,6 +147,17 @@ SLIDES = [
               "Da 4,4945, el 79,2 % del óptimo (ajustada sobre train).",
               "El 21 % restante exige mirar precio y CO2 del día."],
   "notes": "La regla es una referencia para el operador. Fuente: analysis/whatif_findings.md, punto 5."},
+ {"kind": "table",
+  "title": "B6. Media semana de test se mueve 0,14; el test completo, 0,01",
+  "header": ["Peso λ", "Test completo", "1.ª mitad de cada semana", "2.ª mitad"],
+  "table": [["0,18", "6,1164", "7,1099", "4,9948"],
+            ["0,21", "6,1219", "7,1218", "4,9928"],
+            ["0,23", "6,1248", "7,0279", "5,1036"],
+            ["0,2593 (nuestro)", "6,1241", "7,0237", "5,1055"],
+            ["0,27", "6,1212", "6,9784", "5,1475"],
+            ["0,32", "6,1133", "6,9905", "5,1158"]],
+  "bullets": ["Lo que gana una mitad lo pierde la otra: las diferencias pequeñas en el leaderboard son ruido del reparto."],
+  "notes": "El leaderboard público puntúa la mitad de las horas, pero la batería se simula sobre todas. Un cambio mínimo de λ mueve una carga o una descarga al otro lado del reparto. El test completo apenas cambia. Fuente: analysis/split_noise_findings.md, puntos 1 a 3."},
 ]
 
 # ------------------------------------------------------------------ diseño

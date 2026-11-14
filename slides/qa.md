@@ -44,3 +44,6 @@ Una regla fija (cargar 12-16 h; descargar 18-21 h en invierno y 20-23 h en veran
 
 **15. ¿Cuál es el impacto anual y es fiable?**
 Unas 42,3 t de CO2 y 91.380 EUR al año, anualizando el año de entrenamiento (5.993 h) con el factor 8760/5993. Es una extrapolación, no una garantía para otro año. Fuente: strategy_findings.md, punto 6.
+
+**16. ¿Por qué hay tantos equipos empatados, y qué significan las diferencias pequeñas?**
+Porque el óptimo es el mismo para todos. Y las diferencias pequeñas no son fiables: en semanas tipo test, mover λ de 0,18 a 0,32 cambia el score del test completo en 0,01, pero el de media semana hasta en 0,14, porque desplaza cargas y descargas entre la mitad pública y la privada. Lo que gana una mitad lo pierde la otra. Fuente: split_noise_findings.md, puntos 1 a 3.
