@@ -3,7 +3,7 @@
 Las marcas de tiempo son acumuladas. Dilo con tus palabras; las frases son una guía.
 
 ## 1. Portada (0:00)
-Buenos días. Somos [NOMBRE DEL EQUIPO]. Hemos operado la batería del campus con un resultado que creemos que está en el techo de lo posible: 6,43 en el leaderboard público, cero infracciones, y el 99,9 % del óptimo teórico. En cinco minutos os explicamos por qué.
+Buenos días. Somos hackers la l, Alexander y Oscar. Hemos operado la batería del campus con un resultado que creemos que está en el techo de lo posible: 6,43 en el leaderboard público, cero infracciones, y el 99,9 % del óptimo teórico. En cinco minutos os explicamos por qué.
 
 ## 2. El reto (0:20)
 El reto es decidir, cada hora, si cargar o descargar una batería de 2.000 kWh durante 2.016 horas. El Score mezcla CO2 y coste. Solo vemos 24 horas de precio y CO2 hacia delante; la demanda y la solar futuras no las conocemos. Parece un problema de predicción.

@@ -8,8 +8,8 @@ from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 from PIL import Image
 
-TEAM = "[NOMBRE DEL EQUIPO]"
-MEMBERS = "[INTEGRANTES]"
+TEAM = "hackers la l"
+MEMBERS = "Alexander Hall Parrilla · Oscar Senesi Aladjem"
 LB = {"score": "6,43", "dco2": "5,96 %", "dcoste": "7,52 %", "infr": "0"}
 
 SLIDES = [
