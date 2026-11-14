@@ -258,7 +258,10 @@ def plots(res):
     a2.grid(False)
     a2.spines["right"].set_visible(True)
     axs[2].xaxis.set_major_locator(mdates.DayLocator())
-    axs[2].xaxis.set_major_formatter(mdates.DateFormatter("%a %d/%m"))
+    from matplotlib.ticker import FuncFormatter
+    _dias = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
+    axs[2].xaxis.set_major_formatter(FuncFormatter(
+        lambda x, _p: "%s %s" % (_dias[mdates.num2date(x).weekday()], mdates.num2date(x).strftime("%d/%m"))))
     for tl in axs[2].get_xticklabels():
         tl.set_fontsize(8)
     fig.suptitle("Carga en horas baratas y limpias, descarga en las caras y sucias", fontweight="bold", fontsize=13)

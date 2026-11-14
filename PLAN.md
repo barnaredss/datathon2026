@@ -11,13 +11,13 @@ in reserve (see "Handover"). Deadline: submissions close Sunday 15 Nov between 1
 | T0 | Kit, venv, hourly data, eval harness, agent v1 | Agent | P0 | orchestrator | DONE (Sat 13:30) |
 | T1 | Submit v1 to leaderboard, log result | Agent | P0 | **humans** | DONE — 6.43 public, 0 infr., 5th on timestamp tie |
 | T2 | Signal and horizon calibration study | Agent | P2 | Sonnet | DROPPED — headroom is 0.0009 pts; T5 already swept λ and horizon |
-| T3 | Hardening tests + submission packager | Agent | P2 | Sonnet | TODO |
+| T3 | Hardening tests + submission packager | Agent | P2 | Sonnet | SKIPPED — v2 already ran clean on the server; do it only if a new agent version is made |
 | T1b | Submit v2 (meter-outage guard), log result | Agent | P0 | **humans** | DONE — identical to v1 (6.43): the test has no outage weeks |
 | T4 | Data audit + EDA figures | Jury | P1 | Sonnet | DONE — `analysis/eda_findings.md`, 6 `figures/eda_*` |
 | T5 | Strategy evidence figures | Jury | P1 | Sonnet | DONE — `analysis/strategy_findings.md`, 5 `figures/est_*` |
 | T5b | Meter-outage robustness study + agent v2 | Both | P0 | orchestrator | DONE — `analysis/outage_findings.md` |
 | T6 | What-if study for UPC Sostenible | Jury | P1 | Sonnet | DONE — `analysis/whatif_findings.md`, 5 `figures/whatif_*` |
-| T7 | Slide deck, pitch script, Q&A sheet (Spanish) | Jury | P1 | Sonnet + orchestrator review | IN PROGRESS (started Sat ~14:20) |
+| T7 | Slide deck, pitch script, Q&A sheet (Spanish) | Jury | P1 | Sonnet + orchestrator review | DONE — `slides/presentacion.pptx` (12 + 5 backup), `guion.md`, `qa.md`. Humans: set TEAM/MEMBERS in `slides/build_deck.py`, rebuild, review |
 | T8 | Final agent selection, code doc pass, freeze | Agent | P0 | orchestrator | TODO (Sunday) |
 
 Waves: **W1 = T4 + T5** (parallel), **W2 = T6 + T2** (parallel), **W3 = T3**, **W4 = T7**, then T8.
