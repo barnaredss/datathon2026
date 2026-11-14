@@ -10,13 +10,13 @@ in reserve (see "Handover"). Deadline: submissions close Sunday 15 Nov between 1
 |----|------|-------|------|-------|--------|
 | T0 | Kit, venv, hourly data, eval harness, agent v1 | Agent | P0 | orchestrator | DONE (Sat 13:30) |
 | T1 | Submit v1 to leaderboard, log result | Agent | P0 | **humans** | DONE — 6.43 public, 0 infr., 5th on timestamp tie |
-| T2 | Signal and horizon calibration study | Agent | P2 | Sonnet | TODO |
+| T2 | Signal and horizon calibration study | Agent | P2 | Sonnet | DROPPED — headroom is 0.0009 pts; T5 already swept λ and horizon |
 | T3 | Hardening tests + submission packager | Agent | P2 | Sonnet | TODO |
-| T1b | Submit v2 (meter-outage guard), log result | Agent | P0 | **humans** | TODO — `submissions/v2_meter_guard/agent.py` |
+| T1b | Submit v2 (meter-outage guard), log result | Agent | P0 | **humans** | DONE — identical to v1 (6.43): the test has no outage weeks |
 | T4 | Data audit + EDA figures | Jury | P1 | Sonnet | DONE — `analysis/eda_findings.md`, 6 `figures/eda_*` |
 | T5 | Strategy evidence figures | Jury | P1 | Sonnet | DONE — `analysis/strategy_findings.md`, 5 `figures/est_*` |
 | T5b | Meter-outage robustness study + agent v2 | Both | P0 | orchestrator | DONE — `analysis/outage_findings.md` |
-| T6 | What-if study for UPC Sostenible | Jury | P1 | Sonnet | TODO |
+| T6 | What-if study for UPC Sostenible | Jury | P1 | Sonnet | IN PROGRESS (started Sat ~14:05) |
 | T7 | Slide deck, pitch script, Q&A sheet (Spanish) | Jury | P1 | Sonnet + orchestrator review | TODO (needs T4–T6) |
 | T8 | Final agent selection, code doc pass, freeze | Agent | P0 | orchestrator | TODO (Sunday) |
 
@@ -39,8 +39,10 @@ If usage runs short, drop in this order: T3, T2, T6. Never drop T5 or T7.
 5. **The one real edge found so far: meter outages.** Train has no sensor data for all of November and
    the public baseline is 23–25 % lower per hour than train, so a test week with zero measured demand is
    plausible. v1 loses 0.02–0.25 points in that case; v2 (current `agent/agent.py`) recovers most of it
-   and is identical to v1 on normal data. v2 is the exception to "never re-submit an equal agent":
-   if the test has such a week we move above the 6.43 pack, if not we stay at 6.43.
+   and is identical to v1 on normal data. **Outcome (Sat ~14:00): v2 scored exactly the same as v1, so
+   the public test has no low-demand periods.** v2 stays as the agent (robustness, no cost), but in the
+   pitch this is a robustness check, not a source of score. The leaderboard is a tie at 6.43; no further
+   attempts unless a candidate is strictly better locally. All remaining effort goes to the jury track.
 
 ## Submission calendar (30 attempts: 10 per shift; "Validació Ràpida" is free and unlimited)
 

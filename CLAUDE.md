@@ -26,6 +26,9 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
   meter is frozen every night 22:05–06:00 (one repeated value). v2 adds a guard: when the last measured
   net load is < 500 kW the LP assumes it persists to the end of the current 168 h block (it detects block
   starts from timestamp jumps > 2.5 h). Identical to v1 on normal data; see `analysis/outage_findings.md`.
+  v2 scored exactly like v1 on the public board, so the test has no low-demand periods: present the guard
+  as a robustness check, never as a source of score.
+- The leaderboard is saturated: a tie at 6.43, local headroom 0.0009 pts. Do not propose score work.
 - Findings so far live in `analysis/eda_findings.md`, `strategy_findings.md`, `outage_findings.md`.
 
 ## Hard rules

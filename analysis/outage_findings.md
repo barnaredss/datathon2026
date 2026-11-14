@@ -39,6 +39,13 @@ tope no actúa: v2 da exactamente el mismo resultado que v1.
 | Una semana con demanda de 200 kW | 6,4770 | 6,3725 (0,1045) | 6,4428 (0,0341) |
 | Train completo (5.993 h) | 5,6753 | 5,6667 (0,0085) | 5,6667 (0,0085) |
 
+## Resultado en el leaderboard
+Subimos v2 el sábado 14-nov: resultado idéntico a v1 al céntimo (6,43; ΔCO2 5,96 %; ΔCoste 7,52 %;
+4.282,5 kg; 8.934,63 €; 0 infracciones). Conclusión: en el test público la protección no llega a
+actuar, es decir, no hay semanas ni horas con demanda neta inferior a 500 kW. La hipótesis de la
+semana de noviembre sin demanda queda descartada. Mantenemos v2 porque no cuesta nada y protege la
+operación real, pero no aporta puntos en este test.
+
 ## Lectura
 - v2 no cuesta nada con datos normales. Cuando una semana entera se queda sin demanda recupera el
   98 % de la pérdida si es la 3.ª semana (posición de noviembre), en torno al 65 % si es la 1.ª o la
