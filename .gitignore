@@ -1,0 +1,7 @@
+.env
+.venv/
+_download/
+data/train/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

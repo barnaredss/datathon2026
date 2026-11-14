@@ -1,0 +1,57 @@
+# Datathon 2026 — Repte UPC Sostenible (battery control)
+
+Read this first, then `PLAN.md` (status table at the top tells you what is done and what is next).
+
+## The challenge in 10 lines
+- Write `BatteryAgent.act(obs) -> kW` (charge > 0, discharge < 0), called hourly for 2,016 test hours
+  (12 one-week blocks = last week of each month; SOC carries across blocks; one agent instance).
+- Battery: 2,000 kWh, ±500 kW, 90 % round trip (eta = sqrt(0.9) each way), starts at 1,000 kWh, no degradation.
+- `obs` gives current + next-24-rows price and CO2 (index 0 = current hour; the vector is row-based, so near
+  a block end it already contains the next block; it gets shorter than 24 only at the very end), SOC, and
+  last hour's load/solar. `obs["timestamp"]` may be a `pd.Timestamp` or a `str`.
+- Score = max(0, 70·ΔCO2 + 30·ΔCost − 0.20·infractions), deltas relative to the campus without battery.
+  Exports earn nothing (no cost credit, no CO2 credit). Ground truth: `starter_kit/environment.py`.
+- Public leaderboard = 50 % of each test week; private 50 % decides. The jury weighs the presentation decisively.
+- Tie-break: score, then fewer infractions, then EARLIEST timestamp.
+
+## What we already know (do not re-derive)
+- Net campus load (load − PV) is > 500 kW in 99.5 % of hours and never negative; PV is ~2.4 % of load.
+  So the battery never exports and load/PV forecasting is worth ~0. The task is pure arbitrage.
+- The score is linear in grid imports, so it collapses to ONE signal: `w = co2 + LAMBDA_PRICE * price`
+  with `LAMBDA_PRICE = (0.3/0.7) * CO2_base / Cost_base` ≈ 0.2593 (calibrated on public leaderboard data).
+- `agent/agent.py` (v1) = rolling 24 h LP on that signal. Train-full 5.6667 vs perfect-foresight 5.6753;
+  pseudo-test 6.1241 vs 6.1250. 0 infractions, ~4 s per 2,016 steps. We are at the ceiling.
+- Public leaderboard top is 6.43 (ΔCO2 5.97 %, ΔCost 7.50 %) — that is the same ceiling.
+
+## Hard rules
+- Official data only. Never embed real test-period prices/CO2/weather or any external data in the agent.
+- The submitted agent may import only: numpy, pandas, scipy, scikit-learn, joblib, xgboost, lightgbm, math,
+  datetime, collections, itertools, random, json, pathlib, typing.
+- AST scanner rejects: imports of os, sys, shutil, subprocess, socket, urllib, requests, http, importlib,
+  inspect, gc, builtins, threading, multiprocessing, ctypes, signal; calls named `.system() .popen()
+  .spawn*() .rmtree() .stack() .get_objects() .currentframe()` (so NO `np.stack` / `df.stack` — use
+  `np.concatenate` / `np.column_stack`); builtins eval, exec, compile, globals, locals, vars, __import__;
+  attributes `__globals__ __code__ __builtins__ __subclasses__ f_back f_locals f_globals`.
+- Prefer no `.pkl` (server library versions unknown). If state is needed, ship constants or JSON.
+- Zero infractions always: every return goes through `_clamp`. Runtime limit is 60 s total; keep < 15 s.
+- LP objective coefficients must be O(1) (HiGHS tolerance 1e-7 silently breaks tiny coefficients).
+- `agent/agent.py` is the single source of truth for submissions. Never edit files in `submissions/`.
+- Code comments and docstrings of the agent, all figures, slides and the pitch are in SPANISH
+  (the jury audits the code). Internal tooling, plan and reports are in English.
+- Never commit `.env`, `.venv/`, `_download/`, `data/train/`.
+
+## Commands (Windows, Git Bash)
+- Python: `./.venv/Scripts/python.exe` (3.14; numpy, pandas, scipy, sklearn, lightgbm, xgboost, matplotlib)
+- Rebuild hourly data: `./.venv/Scripts/python.exe tools/build_hourly.py`
+- Regression gate: `./.venv/Scripts/python.exe tools/evaluate.py [agent_path]` (~15 s)
+- Official checker: `./.venv/Scripts/python.exe starter_kit/check_submission.py agent/agent.py`
+- Study/figure scripts run as modules from the repo root: `./.venv/Scripts/python.exe -m analysis.eda`
+  (so `from analysis.style import ...` and `from tools.evaluate import ...` resolve).
+
+## Token discipline (we are on limited Pro usage)
+- Subagents run on Sonnet, get one self-contained brief from `PLAN.md`, and do not spawn agents.
+- Write results to files; the final report to the orchestrator is ≤ 150 words: what changed, key numbers,
+  file paths, open issues. No code or tables pasted in the report.
+- Never print dataframes or long logs to the console; print one-line summaries. Never read raw CSVs with
+  the Read tool (use pandas). Run anything longer than ~60 s in the background.
+- Do not re-explore what this file already states. Do not refactor outside your task's files.
