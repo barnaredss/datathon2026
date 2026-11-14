@@ -40,6 +40,10 @@ class BatteryAgent:
     H = 24                  # horizonte de planificación (horas)
     N_TOTAL = 2016          # horas del test: permite vaciar la batería al final
     BLOCK_HOURS = 168       # el test son semanas completas
+    SHRINK = 1.0            # <1 comprime la previsión de la señal hacia su media (horas no conocidas)
+    LAMBDA_MULT = 1.0       # multiplicador del peso del precio
+    USE_PV_GBM = True       # previsión de la solar de la hora actual con árboles
+    PV_K0_FACTOR = 1.05     # factor sobre esa previsión
     NEWSVENDOR = True       # ajusta la consigna de la hora actual a la incertidumbre de la demanda neta
     NV_DISCHARGE = True
     NV_CHARGE = False
@@ -63,7 +67,7 @@ class BatteryAgent:
 
     def __init__(self):
         p = PROFILES
-        self.lam = float(p["lambda"])
+        self.lam = float(p["lambda"]) * self.LAMBDA_MULT
         self.p_price = np.asarray(p["price"], dtype=float)     # [mes][laborable/finde][hora]
         self.p_co2 = np.asarray(p["co2"], dtype=float)
         self.p_pv = np.asarray(p["pv"], dtype=float)           # [mes][hora], kW sin escalar
@@ -80,6 +84,9 @@ class BatteryAgent:
         self.block_start = 0        # fila en la que empezó la semana actual
         self.hist_start = 0         # primera fila con historia utilizable (puede ser anterior a la semana)
         self.prehist = p.get("prehist") or {}
+        self.met = {}               # meteo de cada fila: (irradiancia, T panel, T ambiente, viento)
+        g = p.get("pv_gbm") if self.USE_PV_GBM else None
+        self.gbm = [tuple(tuple(a) for a in t) for t in g] if g else None
         self._new_block = False
         self.block_month = 1
         self.ts = None
@@ -126,6 +133,10 @@ class BatteryAgent:
                 self.load.pop(row, None); self.pv.pop(row, None)
             else:
                 self.load[row], self.pv[row] = float(v[2]), float(v[3]) * self.PV_SCALE
+            if len(v) >= 8 and v[4] is not None:
+                self.met[row] = (float(v[4]), float(v[5]), float(v[6]), float(v[7]))
+            else:
+                self.met.pop(row, None)
             j += 1
         self.hist_start = self.n - (j - 1)
 
@@ -206,6 +217,11 @@ class BatteryAgent:
                 elif r < end:
                     p, c = p * p6, c * c6
             w[k] = self.SCALE * (c + self.lam * p)
+        if self.SHRINK != 1.0 and m > 3:
+            mean = float(w.mean())
+            for k in range(m):
+                if (n + k) not in self.price:
+                    w[k] = mean + self.SHRINK * (w[k] - mean)
         return w
 
     def _signal(self, m):
@@ -257,6 +273,48 @@ class BatteryAgent:
         avg = min(1.8, max(0.15, num / den)) if den > 0 else 1.0
         return avg, last
 
+    def _pv_nowcast(self):
+        """Solar de la hora actual (kW) con un modelo de árboles entrenado con el año oficial.
+
+        Variables: producción de las dos últimas horas y de ayer a la misma hora, perfil mensual,
+        claridad observada, irradiancia y temperaturas de la última hora, y el CO2 de la red de esta
+        hora y la siguiente respecto a su perfil (red más limpia de lo normal = más sol). Los árboles
+        se evalúan aquí mismo, sin depender de ninguna librería de modelos.
+        """
+        n, hs = self.n, self.hist_start
+        if n - 1 < hs or (n - 1) not in self.pv:
+            return None
+        mo = self.block_month - 1
+
+        def prof(j):
+            return self.p_pv[mo][(self.ts + timedelta(hours=j - n)).hour] * self.PV_SCALE
+
+        def get(d, j, i=None):
+            if j < hs or j not in d:
+                return -1.0
+            return d[j] if i is None else d[j][i]
+
+        pvp = prof(n)
+        if pvp <= 30.0:
+            return None
+        pv1, pv2, pv24 = get(self.pv, n - 1), get(self.pv, n - 2), get(self.pv, n - 24)
+        pvp1, pvp2 = prof(n - 1), prof(n - 2)
+        cl1 = min(2.5, max(0.0, pv1 / pvp1)) if pvp1 > 60.0 else -1.0
+        cl2 = min(2.5, max(0.0, pv2 / pvp2)) if (pvp2 > 60.0 and pv2 >= 0.0) else -1.0
+        pers = pvp * (cl1 if cl1 >= 0.0 else 1.0)
+        rc0 = self._ratio(n)[1] if n in self.co2 else -1.0
+        rc1 = self._ratio(n + 1)[1] if ((n + 1) in self.co2 and n + 1 < self._block_end()) else -1.0
+        x = (pv1, pv2, pv24, pvp, pvp1, cl1, cl2, get(self.met, n - 1, 0), get(self.met, n - 2, 0),
+             get(self.met, n - 1, 1), get(self.met, n - 1, 2), get(self.met, n - 1, 3),
+             rc0, rc1, float(self.ts.hour), float(mo), pers)
+        s = 0.0
+        for feat, thr, left, right, val in self.gbm:
+            i = 0
+            while feat[i] >= 0:
+                i = left[i] if x[feat[i]] <= thr[i] else right[i]
+            s += val[i]
+        return max(0.0, s)
+
     def _net_load(self, m):
         """Previsión de demanda neta (demanda - solar) de las filas n .. n+m-1, en kW."""
         end = self._block_end()
@@ -283,6 +341,10 @@ class BatteryAgent:
                 a = self.PV_ALPHA ** k
                 clear = a * clear_last + (1 - a) * clear_avg
             pv = self.p_pv[mo][h] * self.PV_SCALE * (clear if r < end else 1.0) * self.PV_FACTOR
+            if k == 0 and self.gbm is not None:
+                now = self._pv_nowcast()
+                if now is not None:
+                    pv = now * self.PV_K0_FACTOR
             net[k] = load - pv
             if k == 0:
                 self._pv0 = pv
@@ -311,6 +373,9 @@ class BatteryAgent:
             row = n - 1 if n > 0 else 0
             self.load[row] = float(nd["ultim_consum_kw"])
             self.pv[row] = float(nd.get("ultima_solar_kw", 0.0))
+            if "irradiancia_wm2" in nd:
+                self.met[row] = (float(nd["irradiancia_wm2"]), float(nd.get("temp_panel_c", -1.0)),
+                                 float(nd.get("temp_ambient_c", -1.0)), float(nd.get("vent_ms", -1.0)))
         if self._new_block:
             self._load_prehist()
 

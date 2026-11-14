@@ -100,8 +100,10 @@ def compute_profiles(df, pk):
             has = ts in df.index
             pre[ts.strftime("%Y-%m-%d %H")] = [round(float(row.precio_eur_per_kwh), 5), round(float(row.co2_kg_per_kwh), 5),
                                                round(float(df.at[ts, "load_kw"]), 1) if has else None,
-                                               round(float(df.at[ts, "pv_kw"]), 2) if has else None]
+                                               round(float(df.at[ts, "pv_kw"]), 2) if has else None] + (
+                [round(float(df.at[ts, c]), 2) for c in ("irr", "tpanel", "tamb", "wind")] if has else [None] * 4)
     out["prehist"] = pre
+    out["pv_gbm"] = fit_pv_gbm(df, out)
     return out
 
 
@@ -255,6 +257,84 @@ def main():
         print(f"{name:11s} n={len(d):5d} score={r['score']:.3f} (dCO2 {r['dco2']:.2f}% dCost {r['dcost']:.2f}%) "
               f"PF={pf:.3f} ({100 * r['score'] / pf:.1f}%) infr={r['infr']} fallbacks={r['fallbacks']} "
               f"exports={r['exports']:.0f} kWh time={r['secs']:.1f}s (~{r['secs'] * 2016 / len(d):.1f}s/2016)", flush=True)
+
+
+
+PV_GBM_FEATS = ["pv1", "pv2", "pv24", "pvp", "pvp1", "cl1", "cl2", "irr1", "irr2", "tp1", "ta1", "wind1",
+                "rc0", "rc1", "hod", "mo", "pers"]
+
+
+def pv_nowcast_samples(df, prof):
+    """Features for the CURRENT-hour solar nowcast (missing = -1). The agent rebuilds them online
+    in agent_hard/agent.py::_pv_nowcast; keep both in sync."""
+    PV, C = np.array(prof["pv"]), np.array(prof["co2"])
+    idx = df.index
+    mo, hod = idx.month.values - 1, idx.hour.values
+    dt = (idx.dayofweek.values >= 5).astype(int)
+    pvp = PV[mo, hod] * PV_SCALE
+    pv = df.pv_kw.values * PV_SCALE
+    rc = df.co2_kg_per_kwh.values / C[mo, dt, hod]
+    gap = np.r_[True, (np.diff(idx.values).astype("timedelta64[h]").astype(int) != 1)]
+    blk = np.cumsum(gap)
+
+    def lag(a, k):
+        out = np.full(len(a), np.nan)
+        out[k:] = a[:-k]
+        out[~np.r_[np.zeros(k, bool), blk[k:] == blk[:-k]]] = np.nan
+        return out
+
+    rc1 = np.r_[rc[1:], np.nan]
+    rc1[np.r_[blk[1:] != blk[:-1], True]] = np.nan
+    F = pd.DataFrame({"pv1": lag(pv, 1), "pv2": lag(pv, 2), "pv24": lag(pv, 24), "pvp": pvp, "pvp1": lag(pvp, 1),
+                      "irr1": lag(df.irr.values, 1), "irr2": lag(df.irr.values, 2), "tp1": lag(df.tpanel.values, 1),
+                      "ta1": lag(df.tamb.values, 1), "wind1": lag(df.wind.values, 1), "rc0": rc, "rc1": rc1,
+                      "hod": hod.astype(float), "mo": mo.astype(float)})
+    pvp2 = lag(pvp, 2)
+    F["cl1"] = (F.pv1 / F.pvp1).clip(0, 2.5).where(F.pvp1 > 60)
+    F["cl2"] = (F.pv2 / pvp2).clip(0, 2.5).where(pvp2 > 60)
+    F["pers"] = F.pvp * F.cl1.fillna(1.0)
+    ok = ((pvp > 30) & F.pv1.notna()).values
+    return F[PV_GBM_FEATS].fillna(-1.0).values, pv, ok
+
+
+def _flatten_tree(node, feat, thr, left, right, val):
+    i = len(feat)
+    feat.append(-1); thr.append(0.0); left.append(-1); right.append(-1); val.append(0.0)
+    if "leaf_value" in node:
+        val[i] = round(float(node["leaf_value"]), 5)
+        return i
+    assert node["decision_type"] == "<="
+    feat[i] = int(node["split_feature"]); thr[i] = float(node["threshold"])
+    left[i] = _flatten_tree(node["left_child"], feat, thr, left, right, val)
+    right[i] = _flatten_tree(node["right_child"], feat, thr, left, right, val)
+    return i
+
+
+def gbm_predict(trees, x):
+    s = 0.0
+    for feat, thr, left, right, val in trees:
+        i = 0
+        while feat[i] >= 0:
+            i = left[i] if x[feat[i]] <= thr[i] else right[i]
+        s += val[i]
+    return s
+
+
+def fit_pv_gbm(df, prof, rounds=150, leaves=16, lr=0.08):
+    import lightgbm as lgb
+    X, y, ok = pv_nowcast_samples(df, prof)
+    m = lgb.train(dict(objective="l1", learning_rate=lr, num_leaves=leaves, min_data_in_leaf=25, feature_fraction=0.8,
+                       lambda_l2=1.0, verbose=-1, seed=7, deterministic=True, force_row_wise=True),
+                  lgb.Dataset(X[ok], y[ok]), num_boost_round=rounds)
+    trees = []
+    for t in m.dump_model()["tree_info"]:
+        arrs = ([], [], [], [], [])
+        _flatten_tree(t["tree_structure"], *arrs)
+        trees.append([list(a) for a in arrs])
+    chk = X[ok][:300]
+    diff = max(abs(gbm_predict(trees, r) - v) for r, v in zip(chk, m.predict(chk)))
+    assert diff < 0.05, "hand-rolled tree evaluation disagrees with lightgbm: %.4f" % diff
+    return trees
 
 
 if __name__ == "__main__":

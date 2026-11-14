@@ -10,7 +10,8 @@ Public board on Sat 18:30: 16 teams, record 23.23, most between 21 and 23.
 | h0 | pending | hard_v0 | 19.54 | 22.28 | | | | | climatology forecasts; superseded |
 | h1 | pending | hard_v1 | 20.51 | 22.28 | | | | | + ridge forecaster for price/CO2, discharge margin, optimistic PV |
 | h2 | not uploaded | hard_v2 | 20.58 | 22.28 | | | | | + discharge margin that grows with expected solar; superseded |
-| h3 | pending | hard_v3 | 20.68 | 22.28 | | | | | + last 48 training hours as starting history for each test week; quantile rule for the current-hour discharge. Upload this one |
+| h3 | Sat 14 Nov, 17:59:10 (board clock) | hard_v3 | 20.68 | 22.28 | 23.29 | 21.95 | 26.40 | 0 | 13,228.4 kg, 25,071.27 €. Rank 5 of 24. Top: 23.46, 23.40, 23.37, 23.35. Public ≈ 1.126 × local. Public baselines: 60,266 kg CO2 and 94,967 € → λ = 0.272 |
+| h4 | pending | hard_v4 | 20.80 | 22.28 | | | | | + tree-based nowcast of the current hour's solar output (trees evaluated inside agent.py). Expect ≈ 23.4 on public. Upload this one |
 
 ## Standard mode
 
