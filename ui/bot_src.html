@@ -45,11 +45,10 @@ header { display: flex; flex-wrap: wrap; align-items: center; justify-content: s
 .chip { font-family: var(--f-mono); font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; }
 .intro { display: grid; gap: 8px; }
 h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 4.2vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; }
-.sub { color: var(--muted); margin: 0; max-width: 62ch; }
 
 /* ---------- escena ---------- */
-.hero { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 28px; align-items: stretch; }
-.stage { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 14px 14px 12px; display: grid; gap: 10px; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, 240px); gap: 36px; align-items: center; }
+.stage { background: var(--surface); border: 1px solid var(--line); border-radius: 28px; padding: 18px 22px 10px; }
 .stage svg { width: 100%; height: auto; display: block; overflow: visible; }
 .state { justify-self: start; display: inline-flex; align-items: center; gap: 8px; font: 600 13px var(--f-body); padding: 6px 12px; border-radius: 999px; background: var(--bubble); }
 .state i { width: 9px; height: 9px; border-radius: 50%; background: var(--leaf); }
@@ -113,13 +112,15 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 4.2
 @keyframes floaty { 0% { transform: translateY(8px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-26px); opacity: 0; } }
 
 /* ---------- mensaje ---------- */
-.speech { background: var(--bubble); border-radius: 22px; padding: 24px 26px; min-width: 0; display: grid; gap: 14px; align-content: center; }
-.who { font-family: var(--f-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
-.msg { font-family: var(--f-display); font-weight: 600; font-size: clamp(20px, 2.5vw, 26px); line-height: 1.3; margin: 0; min-height: 2.6em; text-wrap: pretty; }
-.tip { margin: 0; color: var(--ink); max-width: 60ch; }
-.tip b { color: var(--leaf); font-weight: 600; }
-.caret { display: inline-block; width: 2px; height: 1em; background: var(--leaf); vertical-align: -0.12em; margin-left: 3px; animation: caret 0.8s steps(1) infinite; }
-@keyframes caret { 50% { opacity: 0; } }
+.speech { min-width: 0; display: grid; gap: 6px; align-content: center; }
+.speech p { margin: 0; }
+.who { font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+.what { font-family: var(--f-display); font-weight: 600; font-size: 19px; line-height: 1.25; }
+.reason { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+.todo { font-size: 13px; font-weight: 600; color: var(--leaf); display: inline-flex; align-items: center; gap: 7px; margin-top: 4px !important; }
+.todo i { width: 7px; height: 7px; border-radius: 50%; background: var(--leaf); flex: none; }
+.swap { animation: swap 0.5s ease-out; }
+@keyframes swap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* ---------- controles ---------- */
 .controls { display: grid; gap: 14px; }
@@ -201,10 +202,7 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 75ch; }
     <span class="chip">Modo difícil · 6.000 kWh · ±1.500 kW · solar ×12</span>
   </header>
 
-  <div class="intro">
-    <h1>Volta, el bot de la batería del campus</h1>
-    <p class="sub">Hora a hora, Volta te cuenta qué hace la batería, por qué lo hace y qué conviene hacer en el campus.</p>
-  </div>
+  <h1>This is Volta.</h1>
 
   <section class="hero" id="scene" aria-live="polite">
     <div class="stage">
@@ -258,12 +256,12 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 75ch; }
           <g><text class="zz" x="214" y="70">z</text><text class="zz" x="214" y="70">z</text><text class="zz" x="214" y="70">z</text></g>
         </g>
       </svg>
-      <span class="state"><i></i><span id="state">Cargando con sol</span></span>
     </div>
-    <div class="speech">
-      <div class="who" id="who">Volta</div>
-      <p class="msg"><span id="msg"></span><span class="caret" aria-hidden="true"></span></p>
-      <p class="tip" id="tip"></p>
+    <div class="speech" id="speech">
+      <div class="who" id="who"></div>
+      <p class="what" id="what"></p>
+      <p class="reason" id="reason"></p>
+      <p class="todo"><i></i><span id="todo"></span></p>
     </div>
   </section>
 
@@ -373,29 +371,11 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 75ch; }
     const h = hs[i], a = h.a, soc = h.soc / 60, g = Math.round(h.c * 1000);
     const nd = nextHour(hs, i, x => x.a < -100), nc = nextHour(hs, i, x => x.a > 100);
     switch (kind(h)) {
-      case "sun": return { state: "Cargando con sol",
-        msg: `Sobra sol en el campus: guardo ${fmt(Math.min(a, -h.net))} kW gratis.`,
-        tip: `<b>Qué hacer:</b> encended ahora lo que se pueda aplazar. La energía es solar y no cuesta nada.` };
-      case "grid": return { state: "Cargando de la red",
-        msg: `La red está barata y limpia (${g} g CO₂/kWh): cargo ${fmt(a)} kW.`,
-        tip: nd ? `<b>Qué hacer:</b> buen momento para consumir. Devolveré esta energía al campus a las ${nd.h}:00.` : `<b>Qué hacer:</b> buen momento para consumir.` };
-      case "dis": return { state: "Descargando: el campus no compra a la red",
-        msg: `Hora cara y con más CO₂ (${g} g/kWh): descargo ${fmt(-a)} kW para el campus.`,
-        tip: `<b>Qué hacer:</b> si se puede, aplazad consumos grandes${nc ? ` hasta las ${nc.h}:00` : ""}.` };
-      default: return { state: "Esperando",
-        msg: soc > 60 && nd ? `Espero con la batería al ${fmt(soc)} %: descargaré a las ${nd.h}:00.` :
-             nc ? `Espero: a las ${nc.h}:00 será mejor momento para cargar.` : `Espero: ahora no compensa mover energía.`,
-        tip: `<b>Qué hacer:</b> consumo normal. La diferencia con las próximas horas no compensa el 10 % que se pierde en cada ciclo.` };
+      case "sun": return { what: `Carga ${fmt(Math.min(a, -h.net))} kW de sol`, why: "Sobra sol: es gratis.", tip: "Buen momento para consumir" };
+      case "grid": return { what: `Carga ${fmt(a)} kW de la red`, why: `Red barata y limpia (${g} g CO₂/kWh).`, tip: "Buen momento para consumir" };
+      case "dis": return { what: `Descarga ${fmt(-a)} kW al campus`, why: `Red cara y con más CO₂ (${g} g/kWh).`, tip: nc ? `Aplazad consumos hasta las ${nc.h}:00` : "Aplazad consumos grandes" };
+      default: return { what: "Espera", why: soc > 60 && nd ? `Descargará a las ${nd.h}:00.` : nc ? `Cargará a las ${nc.h}:00.` : "Ahora no compensa.", tip: "Consumo normal" };
     }
-  }
-
-  let typing = 0;
-  function type(text) {
-    const el = $("msg"), my = ++typing;
-    if (reduce) { el.textContent = text; return; }
-    el.textContent = ""; let k = 0;
-    const step = () => { if (my !== typing) return; el.textContent = text.slice(0, ++k); if (k < text.length) setTimeout(step, 24); };
-    step();
   }
 
   const shown = {};
@@ -417,9 +397,10 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 75ch; }
     const w = DATA.weeks[wk], hs = w.hours, h = hs[hour], k = kind(h);
     $("hour").value = hour;
     const when = `${h.d} ${h.dd} · ${String(h.h).padStart(2, "0")}:00`;
-    $("clock").textContent = when; $("who").textContent = "Volta · " + when;
+    $("clock").textContent = when; $("who").textContent = when;
     const m = message(hs, hour);
-    type(m.msg); $("tip").innerHTML = m.tip; $("state").textContent = m.state;
+    $("what").textContent = m.what; $("reason").textContent = m.why; $("todo").textContent = m.tip;
+    const sp = $("speech"); sp.classList.remove("swap"); void sp.offsetWidth; if (!reduce) sp.classList.add("swap");
     const scene = $("scene");
     scene.classList.remove("st-sun", "st-grid", "st-dis", "st-idle"); scene.classList.add("st-" + k);
     const cs = hs.map(x => x.c), cmin = Math.min(...cs), cmax = Math.max(...cs);
