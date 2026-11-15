@@ -31,6 +31,31 @@ except Exception:  # sin scipy: política de respaldo
 PROFILES = None  # __PROFILES__
 
 
+# Calendario del campus (información pública y conocida de antemano, no son datos del test):
+# festivos oficiales de Catalunya y Barcelona y periodos no lectivos de la UPC del curso 2025-26.
+# Valor = peso de la forma de domingo en la previsión de demanda de ese día (1 = festivo).
+# Los pesos de los periodos no lectivos salen del año de entrenamiento: cociente demanda 10-15 h /
+# demanda nocturna en esos días frente al de un laborable (1,43) y un domingo (0,86).
+_FESTIVO, _NAVIDAD, _PASCUA, _AGOSTO = 1.0, 0.37, 0.75, 0.49
+CALENDARIO = {
+    "2025-09-11": _FESTIVO,  # Diada
+    "2025-09-24": _FESTIVO,  # La Mercè (festivo local de Barcelona)
+    "2025-12-08": _FESTIVO,  # Inmaculada
+    "2025-12-24": _FESTIVO,  # cierre (así se comportó en los datos)
+    "2025-12-25": _FESTIVO, "2025-12-26": _FESTIVO,  # Navidad, Sant Esteve
+    "2025-12-29": _NAVIDAD, "2025-12-30": _NAVIDAD,
+    "2025-12-31": _FESTIVO,  # cierre, por analogía con el 24
+    "2026-01-01": _FESTIVO, "2026-01-02": _NAVIDAD, "2026-01-05": _NAVIDAD, "2026-01-06": _FESTIVO,
+    "2026-03-30": _PASCUA, "2026-03-31": _PASCUA, "2026-04-01": _PASCUA, "2026-04-02": _PASCUA,
+    "2026-04-03": _FESTIVO, "2026-04-06": _FESTIVO,  # Viernes Santo, Lunes de Pascua
+    "2026-05-01": _FESTIVO,
+    "2026-05-25": _FESTIVO,  # Segona Pasqua (festivo local de Barcelona)
+    "2026-06-24": _FESTIVO,  # Sant Joan
+}
+for _d in range(3, 32):      # periodo no lectivo de verano de la UPC (3-31 de agosto)
+    CALENDARIO.setdefault("2026-08-%02d" % _d, _AGOSTO)
+
+
 class BatteryAgent:
     ETA = 0.9 ** 0.5
     EPS = 1e-4
@@ -42,6 +67,7 @@ class BatteryAgent:
     BLOCK_HOURS = 168       # el test son semanas completas
     SHRINK = 1.0            # <1 comprime la previsión de la señal hacia su media (horas no conocidas)
     LAMBDA_MULT = 1.0       # multiplicador del peso del precio
+    USE_CALENDAR = True     # usa el calendario de festivos y periodos no lectivos
     USE_HOLIDAY = True      # detecta laborables con comportamiento de festivo
     HOL_POS = 0.3           # posición del umbral entre el cociente de un domingo (0) y el de un laborable (1)
     USE_PV_GBM = True       # previsión de la solar de la hora actual con árboles
@@ -322,6 +348,17 @@ class BatteryAgent:
             s += val[i]
         return max(0.0, s)
 
+    def _shape(self, t, hol):
+        """Forma semanal de la demanda para la hora t: laborable, domingo o mezcla según el calendario."""
+        wd, h = t.weekday(), t.hour
+        base = self.p_load[wd * 24 + h]
+        if wd >= 5:
+            return base
+        a = CALENDARIO.get(t.strftime("%Y-%m-%d")) if self.USE_CALENDAR else None
+        if a is None:
+            a = 1.0 if hol else 0.0
+        return (1.0 - a) * base + a * self.p_load[144 + h]
+
     def _holiday_mode(self):
         """True si el último día laborable observado se comportó como un festivo (campus cerrado).
 
@@ -335,8 +372,8 @@ class BatteryAgent:
             if r not in self.load:
                 continue
             t = self.ts + timedelta(hours=r - self.n)
-            if t.weekday() >= 5:
-                continue
+            if t.weekday() >= 5 or (self.USE_CALENDAR and t.strftime("%Y-%m-%d") in CALENDARIO):
+                continue          # fines de semana y días ya conocidos por el calendario no informan
             dd = days.setdefault(t.date(), ([], []))
             if 10 <= t.hour <= 15:
                 dd[0].append(self.load[r])
@@ -365,14 +402,8 @@ class BatteryAgent:
             mo, _, h, widx = self._attrs(r)
             clim = self.p_load_month[mo] * self.p_load[widx] / mean_week
             if r < end and have_last:
-                if hol and widx < 120:          # laborable que se comportará como festivo: forma de domingo
-                    widx = 144 + h
                 tl = self.ts + timedelta(hours=last - self.n)
-                wl = tl.weekday()
-                if hol and wl < 5:
-                    wl = 6
-                ref = self.p_load[wl * 24 + tl.hour]
-                load = self.load[last] * self.p_load[widx] / ref
+                load = self.load[last] * self._shape(self.ts + timedelta(hours=k), hol) / self._shape(tl, hol)
                 y = r - 24
                 if self.BETA_LOAD > 0 and y >= self.hist_start and y in self.load:
                     load = (1 - self.BETA_LOAD) * load + self.BETA_LOAD * self.load[y]

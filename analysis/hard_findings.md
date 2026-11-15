@@ -74,3 +74,20 @@ la dispersión de la previsión, multiplicadores del peso del precio, regla del 
 - El mejor equipo (27,98 público) evita 16,2 kg/h, lo mismo que nuestra cota de información perfecta
   en las semanas de validación (16,0 kg/h). Nosotros, 13,1 kg/h con hard_v3. No conocemos la cota del
   test público; con un caso base un 20 % menor podría estar en torno a 28–29.
+
+## 9. Datos externos: calendario sí, meteorología real no
+- Fuentes públicas consultadas: calendario académico de la UPC 2025-26 (periodos no lectivos: Navidad
+  29 dic – 5 ene, Semana Santa 30 mar – 6 abr, verano 3–31 ago), festivos de Catalunya y festivos locales
+  de Barcelona (Mercè 24 sep 2025; Segona Pasqua 25 may 2026). Son información conocida de antemano: un
+  operador real la tiene.
+- Los datos de entrenamiento lo confirman. Cociente demanda 10–15 h / nocturna: laborable 1,43, domingo 0,86,
+  festivos 0,73–0,84, no lectivo de Navidad 1,22, de Semana Santa 1,00, laborables de agosto 1,15.
+- Las semanas de test contienen: Mercè (24 sep), Navidad y Sant Esteve (25–26 dic) más el no lectivo de
+  Navidad, el no lectivo de Semana Santa (30–31 mar), Segona Pasqua (25 may), Sant Joan (24 jun) y el
+  no lectivo de agosto (25–31 ago). Encaja con el caso base un 20 % menor del test público.
+- hard_v6 usa ese calendario en la previsión de demanda (forma de domingo en festivos; mezcla con el peso
+  medido en los no lectivos). Validación fuera de muestra en 6 semanas de entrenamiento con festivos:
+  13,590 → 13,745 (+0,155; 85,5 % → 86,5 % de la cota). Semanas normales: 20,795 → 20,807.
+  La detección automática de cierres se mantiene para días no previstos en el calendario.
+- No usamos la meteorología ni los precios reales de las semanas de test: eso sería conocer las respuestas,
+  no prever. Los archivos de "previsiones históricas" públicos son prácticamente la observación real.

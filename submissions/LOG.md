@@ -12,6 +12,7 @@ Public board on Sat 18:30: 16 teams, record 23.23, most between 21 and 23.
 | h2 | not uploaded | hard_v2 | 20.58 | 22.28 | | | | | + discharge margin that grows with expected solar; superseded |
 | h3 | Sat 14 Nov, 17:59:10 (board clock) | hard_v3 | 20.68 | 22.28 | 23.29 | 21.95 | 26.40 | 0 | 13,228.4 kg, 25,071.27 €. Rank 5 of 24. Top: 23.46, 23.40, 23.37, 23.35. Public ≈ 1.126 × local. Public baselines: 60,266 kg CO2 and 94,967 € → λ = 0.272 |
 | h4 | Sun 15 Nov, morning | hard_v4 | 20.80 | 22.28 | 23.44 | | | | + tree-based nowcast of the current hour's solar output (trees evaluated inside agent.py) |
+| h6 | pending | hard_v6 | 20.81 | 22.28 | | | | | + official holiday / UPC non-teaching calendar in the demand forecast. +0.155 out of sample on training weeks with holidays. Upload this one; final pair = hard_v6 + hard_v5 (or v4) |
 | h5 | pending | hard_v5 | 20.80 | 22.28 | | | | | + holiday detection in the demand forecast (weekday that behaved like a Sunday → Sunday shape). Same as v4 on normal weeks; +0.28 on synthetic holiday weeks. Upload this one; final pair = hard_v5 + hard_v4 |
 
 Sunday 11:00: top of the hard board is Ommetje 27.98 (ΔCO2 27.05 %, ΔCost 30.15 %, 16,299.9 kg, 28,633.67 €).

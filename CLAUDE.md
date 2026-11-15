@@ -72,6 +72,10 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
 - Sunday board: top 27.98 (16.2 kg/h avoided = our local PF kg/h). Public baseline/hour is 20 % below our
   validation weeks; with lower demand the PF rises a lot (load ×0.8 → PF 29.0) and the agent sits at
   90–92 % of it. Prudence-parameter sweeps on low-demand scenarios are flat (`analysis/hard_findings.md` §8).
+- hard_v6 adds `CALENDARIO` (official Catalan/Barcelona holidays + UPC 2025-26 non-teaching periods, public and
+  known in advance) to the demand shape: +0.155 out of sample on holiday weeks (`hard_findings.md` §9).
+  The user asked to look at external data; we use only information known before each hour. Never embed
+  real observed weather/prices of the test weeks.
 - Local pseudo-test profiles are fitted out of sample; always check `fallbacks=0` in the output.
 
 ## Hard rules
