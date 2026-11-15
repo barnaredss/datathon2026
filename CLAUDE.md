@@ -40,6 +40,8 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
   LAMBDA_PRICE within 0.18–0.32 moves a half-test score by 0.14–0.46 while the full score moves 0.01,
   and it is zero-sum with the private half (`analysis/split_noise_findings.md`). Do not submit λ variants
   until the humans report how the final ranking is computed (private half or full test; which submission).
+- UI: `ui/bot_src.html` + `python -m ui.build_bot` → `ui/bot.html` (artifact https://claude.ai/artifact/5rmyb5vc6S3JduorJMjpVX)
+  and `ui/bot_local.html` (offline). Screenshot for the deck: `figures/ui_bot_crop.png`.
 - Findings so far live in `analysis/eda_findings.md`, `strategy_findings.md`, `outage_findings.md`.
 
 ## Hard mode (added by the organisers Saturday afternoon — the live competition)
@@ -79,7 +81,8 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
 - Local pseudo-test profiles are fitted out of sample; always check `fallbacks=0` in the output.
 
 ## Hard rules
-- Official data only. Never embed real test-period prices/CO2/weather or any external data in the agent.
+- Official data plus information known in advance only (the public holiday / UPC calendar, asked for by the user
+  on Sunday). Never embed real observed test-period prices, CO2, weather or demand in the agent.
 - The submitted agent may import only: numpy, pandas, scipy, scikit-learn, joblib, xgboost, lightgbm, math,
   datetime, collections, itertools, random, json, pathlib, typing.
 - AST scanner rejects: imports of os, sys, shutil, subprocess, socket, urllib, requests, http, importlib,

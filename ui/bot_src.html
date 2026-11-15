@@ -1,0 +1,381 @@
+<title>Bot Volta</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: una columna estrecha. Volta y su mensaje arriba; batería y contadores; la semana entera en un gráfico; las próximas 24 h en una tira. */
+:root {
+  --bg: #F2F8F4;
+  --surface: #FFFFFF;
+  --ink: #0F2A1D;
+  --muted: #5A7666;
+  --line: #D5E5DA;
+  --leaf: #1C9A57;
+  --charge: #2FB46E;
+  --discharge: #0E4F33;
+  --sun: #D8E35A;
+  --signal: #7A9A88;
+  --bubble: #E4F4EA;
+  --f-display: "Outfit", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0A1610; --surface: #10221A; --ink: #E4F3E9; --muted: #8DAE9B; --line: #1F3A2C;
+    --leaf: #3FCB80; --charge: #46D58A; --discharge: #B5EACB; --sun: #C9D648; --signal: #8FB09E; --bubble: #163326;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0A1610; --surface: #10221A; --ink: #E4F3E9; --muted: #8DAE9B; --line: #1F3A2C;
+  --leaf: #3FCB80; --charge: #46D58A; --discharge: #B5EACB; --sun: #C9D648; --signal: #8FB09E; --bubble: #163326;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 600; font-size: 18px; }
+.brand svg { width: 26px; height: 26px; }
+.chip { font-family: var(--f-mono); font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw, 36px); line-height: 1.1; margin: 0; text-wrap: balance; }
+
+.hero { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; }
+.bot { position: relative; width: 150px; height: 180px; }
+.bot svg { width: 100%; height: 100%; overflow: visible; }
+.bob { animation: bob 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.eye { animation: blink 4.6s infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+.fill { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 0.6s cubic-bezier(.2,.8,.2,1); fill: var(--charge); }
+.mood { position: absolute; right: -6px; top: 6px; width: 44px; height: 44px; border-radius: 50%; background: var(--surface);
+  border: 2px solid var(--line); display: grid; place-items: center; }
+.mood svg { width: 24px; height: 24px; }
+.pop { animation: pop 0.45s cubic-bezier(.3,1.6,.5,1); }
+@keyframes pop { from { transform: scale(0.4); } to { transform: scale(1); } }
+.spark { position: absolute; pointer-events: none; width: 14px; height: 14px; animation: rise 1.6s ease-out forwards; }
+@keyframes rise { from { transform: translate(0, 0) scale(0.6); opacity: 1; } to { transform: translate(var(--dx), -70px) scale(1.1); opacity: 0; } }
+
+.speech { background: var(--bubble); border-radius: 18px 18px 18px 4px; padding: 16px 18px; min-width: 0; position: relative; }
+.speech .who { font-family: var(--f-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.speech .msg { font-family: var(--f-display); font-weight: 600; font-size: clamp(18px, 2.6vw, 24px); line-height: 1.25; margin: 4px 0 6px; min-height: 2.5em; }
+.speech .tip { color: var(--ink); }
+.speech .tip b { color: var(--leaf); font-weight: 600; }
+.caret { display: inline-block; width: 2px; height: 1em; background: var(--leaf); vertical-align: -0.12em; margin-left: 2px; animation: caret 0.8s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: 500 13px var(--f-body); padding: 8px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--leaf); color: var(--surface); }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 8px 14px; font: 600 13px var(--f-body); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover, .seg button:hover { filter: brightness(0.97); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+.scrub { flex: 1 1 220px; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.scrub input { flex: 1; accent-color: var(--leaf); min-width: 0; }
+.clock { font-family: var(--f-mono); font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 2px; }
+.kpi .v { font-family: var(--f-display); font-weight: 700; font-size: clamp(22px, 3vw, 30px); font-variant-numeric: tabular-nums; }
+.kpi .l { font-size: 12.5px; color: var(--muted); }
+.kpi .bar { height: 6px; border-radius: 6px; background: var(--line); overflow: hidden; margin-top: 6px; }
+.kpi .bar i { display: block; height: 100%; background: var(--leaf); border-radius: 6px; transition: width 0.6s cubic-bezier(.2,.8,.2,1); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.panel h2 { font-family: var(--f-display); font-weight: 600; font-size: 18px; margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.chartbox { overflow-x: auto; }
+svg.chart { width: 100%; min-width: 560px; height: auto; display: block; }
+.chart text { fill: var(--muted); font: 11px var(--f-mono); }
+.chart .zero { stroke: var(--line); }
+.chart .grid { stroke: var(--line); stroke-dasharray: 2 4; }
+.chart .b { transform-box: fill-box; transition: transform 0.5s cubic-bezier(.2,.8,.2,1), opacity 0.3s; }
+.chart .b.up { fill: var(--charge); transform-origin: 50% 100%; }
+.chart .b.dn { fill: var(--discharge); transform-origin: 50% 0%; }
+.chart .b.future { opacity: 0.32; }
+.chart .solar { fill: var(--sun); opacity: 0.45; }
+.chart .sig { fill: none; stroke: var(--signal); stroke-width: 1.6; stroke-dasharray: 4 3; }
+.chart .cursor { stroke: var(--ink); stroke-width: 1.5; transition: transform 0.35s ease; }
+.chart .dot { fill: var(--leaf); stroke: var(--surface); stroke-width: 2; transition: transform 0.35s ease; }
+
+.strip { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 3px; }
+.cell { height: 46px; border-radius: 6px; background: var(--line); position: relative; transition: background 0.3s, transform 0.3s; }
+.cell.c { background: var(--charge); }
+.cell.d { background: var(--discharge); }
+.cell.now { transform: translateY(-4px); box-shadow: 0 0 0 2px var(--ink); }
+.cell span { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font: 10px var(--f-mono); color: var(--muted); }
+.strip-wrap { padding-bottom: 18px; }
+
+.why { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.fact { border-left: 3px solid var(--leaf); padding: 2px 0 2px 12px; min-width: 0; }
+.fact .t { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.fact .n { font-family: var(--f-display); font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; }
+.fact .s { font-size: 13px; color: var(--muted); }
+footer { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
+
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; justify-items: center; }
+  .speech { width: 100%; border-radius: 18px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .why { grid-template-columns: 1fr; }
+  .cell span { display: none; }
+  .cell span.show { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bob, .eye, .caret { animation: none; }
+  .chart .b, .fill, .kpi .bar i, .cell, .chart .cursor, .chart .dot { transition: none; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><path d="M5 21C5 11 11 5 22 4c-1 11-7 17-17 17Z" fill="var(--leaf)"/><path d="M5 21 15 11" stroke="var(--surface)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+      UPC Sostenible · Campus Nord
+    </div>
+    <span class="chip">Modo difícil · 6.000 kWh · ±1.500 kW · solar ×12</span>
+  </header>
+
+  <h1>Volta te dice qué hacer con la energía del campus, hora a hora</h1>
+
+  <section class="hero" aria-live="polite">
+    <div class="bot" id="bot">
+      <svg viewBox="0 0 150 180" aria-label="Volta, el bot de la batería">
+        <defs><clipPath id="body"><rect x="27" y="42" width="96" height="128" rx="22"/></clipPath></defs>
+        <g class="bob">
+          <path d="M75 30c0-12 8-20 22-22-1 14-9 21-22 22Z" fill="var(--leaf)"/>
+          <rect x="58" y="28" width="34" height="16" rx="5" fill="var(--ink)"/>
+          <rect x="27" y="42" width="96" height="128" rx="22" fill="var(--surface)"/>
+          <g clip-path="url(#body)"><rect id="fill" class="fill" x="27" y="42" width="96" height="128"/></g>
+          <rect x="27" y="42" width="96" height="128" rx="22" fill="none" stroke="var(--ink)" stroke-width="4"/>
+          <rect x="41" y="74" width="68" height="44" rx="14" fill="var(--surface)" opacity="0.92"/>
+          <ellipse class="eye" cx="61" cy="92" rx="6" ry="7" fill="var(--ink)"/>
+          <ellipse class="eye" cx="89" cy="92" rx="6" ry="7" fill="var(--ink)"/>
+          <path id="mouth" d="M64 105q11 9 22 0" fill="none" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <div class="mood" id="mood" aria-hidden="true"></div>
+    </div>
+    <div class="speech">
+      <div class="who" id="who">Volta · lun 18/05 · 13:00</div>
+      <p class="msg"><span id="msg"></span><span class="caret" aria-hidden="true"></span></p>
+      <div class="tip" id="tip"></div>
+    </div>
+  </section>
+
+  <div class="controls">
+    <div class="seg" id="weeks" role="group" aria-label="Semana de ejemplo"></div>
+    <button class="btn" id="play" type="button" aria-pressed="false"></button>
+    <div class="scrub">
+      <label for="hour" class="clock">Hora</label>
+      <input id="hour" type="range" min="0" max="167" step="1" value="13">
+      <span class="clock" id="clock"></span>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><span class="v" id="k-soc">0 %</span><span class="l">Batería ahora</span><div class="bar"><i id="k-socbar"></i></div></div>
+    <div class="kpi"><span class="v" id="k-co2">0</span><span class="l">kg de CO₂ evitados esta semana</span></div>
+    <div class="kpi"><span class="v" id="k-eur">0</span><span class="l">€ ahorrados esta semana</span></div>
+    <div class="kpi"><span class="v" id="k-sol">0</span><span class="l">kWh de sol guardados (si no, se perdían)</span></div>
+  </div>
+
+  <section class="panel">
+    <h2 id="wk-title">La semana</h2>
+    <div class="legend">
+      <span><i style="background:var(--charge)"></i>carga</span>
+      <span><i style="background:var(--discharge)"></i>descarga</span>
+      <span><i style="background:var(--sun);opacity:.6"></i>solar del campus</span>
+      <span><i style="background:transparent;border-top:2px dashed var(--signal);height:0;border-radius:0"></i>señal CO₂ + λ·precio (cuanto más alta, más cara y sucia la red)</span>
+    </div>
+    <div class="chartbox"><svg class="chart" id="chart" viewBox="0 0 960 270" role="img" aria-label="Potencia de la batería, solar y señal de la red durante la semana"></svg></div>
+  </section>
+
+  <section class="panel">
+    <h2>Las próximas 24 horas</h2>
+    <div class="strip-wrap"><div class="strip" id="strip"></div></div>
+  </section>
+
+  <section class="why" id="why"></section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+/*__DATA__*/
+(() => {
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fmt = (x, d = 0) => Number(x).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const $ = (id) => document.getElementById(id);
+  let wk = 0, hour = 13, timer = null;
+
+  const ICON = {
+    sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="var(--sun)" stroke="var(--ink)" stroke-width="1.5"/><g stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g></svg>',
+    plug: '<svg viewBox="0 0 24 24"><path d="M8 2v5M16 2v5" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><path d="M5 7h14v4a7 7 0 0 1-14 0Z" fill="var(--charge)" stroke="var(--ink)" stroke-width="1.6"/><path d="M12 18v4" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/></svg>',
+    bolt: '<svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7Z" fill="var(--leaf)" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/></svg>',
+    moon: '<svg viewBox="0 0 24 24"><path d="M20 15A8 8 0 1 1 9 4a7 7 0 0 0 11 11Z" fill="var(--bubble)" stroke="var(--ink)" stroke-width="1.6"/></svg>'
+  };
+
+  const W = 960, H = 270, L = 44, R = 50, T = 14, B = 36;
+  const PW = W - L - R, PH = H - T - B, PMAX = 1700;
+  const xOf = (i) => L + (i + 0.5) * PW / 168;
+  const yP = (kw) => T + PH / 2 - (kw / PMAX) * (PH / 2);
+
+  function drawChart() {
+    const w = DATA.weeks[wk], hs = w.hours, ns = "http://www.w3.org/2000/svg";
+    const svg = $("chart"); svg.innerHTML = "";
+    const add = (tag, attrs, parent = svg) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+    [-1500, -750, 750, 1500].forEach(v => { add("line", { class: "grid", x1: L, x2: W - R, y1: yP(v), y2: yP(v) }); add("text", { x: L - 6, y: yP(v) + 4, "text-anchor": "end" }).textContent = fmt(v); });
+    add("text", { x: L - 6, y: yP(0) + 4, "text-anchor": "end" }).textContent = "0";
+    add("text", { x: L - 6, y: H - B + 16, "text-anchor": "end" }).textContent = "kW";
+    let sp = `M${xOf(0) - PW / 336},${yP(0)}`;
+    hs.forEach((h, i) => { sp += ` L${xOf(i)},${yP(Math.min(h.pv, PMAX))}`; });
+    sp += ` L${xOf(167) + PW / 336},${yP(0)} Z`;
+    add("path", { class: "solar", d: sp });
+    add("line", { class: "zero", x1: L, x2: W - R, y1: yP(0), y2: yP(0) });
+    const bw = PW / 168 * 0.78;
+    hs.forEach((h, i) => {
+      if (Math.abs(h.a) < 1) return;
+      const up = h.a > 0, y0 = yP(0), y1 = yP(h.a);
+      const r = add("rect", { class: "b " + (up ? "up" : "dn"), x: xOf(i) - bw / 2, y: Math.min(y0, y1), width: bw, height: Math.max(1, Math.abs(y1 - y0)), "data-i": i });
+      r.style.transform = "scaleY(0)";
+      r.style.transitionDelay = reduce ? "0ms" : (i * 4) + "ms";
+    });
+    const ws = hs.map(h => h.w), wmin = Math.min(...ws), wmax = Math.max(...ws);
+    const yW = (v) => T + 6 + (1 - (v - wmin) / (wmax - wmin)) * (PH - 12);
+    add("path", { class: "sig", d: hs.map((h, i) => (i ? "L" : "M") + xOf(i) + "," + yW(h.w)).join(" ") });
+    add("text", { x: W - 2, y: yW(wmax) + 4, "text-anchor": "end" }).textContent = "cara";
+    add("text", { x: W - 2, y: yW(wmin) + 4, "text-anchor": "end" }).textContent = "barata";
+    for (let d = 0; d < 7; d++) {
+      const x = L + d * 24 * PW / 168;
+      if (d) add("line", { class: "grid", x1: x, x2: x, y1: T, y2: H - B });
+      add("text", { x: x + 12 * PW / 168, y: H - 12, "text-anchor": "middle" }).textContent = hs[d * 24].d + " " + hs[d * 24].dd;
+    }
+    add("line", { class: "cursor", id: "cur", x1: 0, x2: 0, y1: T, y2: H - B });
+    add("circle", { class: "dot", id: "dot", cx: 0, cy: 0, r: 5 });
+    requestAnimationFrame(() => requestAnimationFrame(() => svg.querySelectorAll(".b").forEach(b => b.style.transform = "scaleY(1)")));
+  }
+
+  function nextHour(hs, i, pred) {
+    for (let k = i + 1; k < Math.min(hs.length, i + 25); k++) if (pred(hs[k])) return hs[k];
+    return null;
+  }
+
+  function message(hs, i) {
+    const h = hs[i], a = h.a, soc = h.soc / 60;
+    const nd = nextHour(hs, i, x => x.a < -100), nc = nextHour(hs, i, x => x.a > 100);
+    const g = Math.round(h.c * 1000);
+    if (a > 50 && h.net < 0) return { mood: "sun",
+      msg: `Sobra sol en el campus: guardo ${fmt(Math.min(a, -h.net))} kW gratis en la batería.`,
+      tip: `<b>Qué hacer:</b> es el mejor momento para encender lo que se pueda aplazar (climatización, cargas de coches, equipos de laboratorio). Ahora la energía es solar.` };
+    if (a > 50) return { mood: "plug",
+      msg: `La red está barata y limpia (${g} g CO₂/kWh): cargo ${fmt(a)} kW para usarlos más tarde.`,
+      tip: nd ? `<b>Qué hacer:</b> buen momento para consumir. Esta energía la devolveré al campus a las ${nd.h}:00, cuando la red sea más cara y más sucia.` : `<b>Qué hacer:</b> buen momento para consumir: la red está en uno de sus mejores momentos del día.` };
+    if (a < -50) return { mood: "bolt",
+      msg: `Hora cara y sucia (${fmt(h.p, 3)} €/kWh, ${g} g CO₂/kWh): descargo ${fmt(-a)} kW y el campus deja de comprarlos a la red.`,
+      tip: `<b>Qué hacer:</b> si se puede, aplazad consumos grandes${nc ? ` hasta las ${nc.h}:00` : ""}. Cada kWh que no se pide ahora evita el momento más contaminante.` };
+    return { mood: "moon",
+      msg: soc > 60 && nd ? `Espero con la batería al ${fmt(soc)} %: la descargaré a las ${nd.h}:00, cuando la red esté más cara.` :
+           nc ? `Espero: a las ${nc.h}:00 la red estará más barata y limpia para cargar.` : `Espero: ahora no compensa ni cargar ni descargar.`,
+      tip: `<b>Qué hacer:</b> consumo normal. La diferencia de precio y CO₂ con las próximas horas no compensa las pérdidas de la batería (10 % por ciclo).` };
+  }
+
+  let typing = 0;
+  function type(text) {
+    const el = $("msg"), my = ++typing;
+    if (reduce) { el.textContent = text; return; }
+    el.textContent = ""; let k = 0;
+    const step = () => { if (my !== typing) return; el.textContent = text.slice(0, ++k); if (k < text.length) setTimeout(step, 14); };
+    step();
+  }
+
+  const shown = {};
+  function count(id, to, suffix = "", d = 0) {
+    const el = $(id), from = shown[id] ?? 0; shown[id] = to;
+    if (reduce) { el.textContent = fmt(to, d) + suffix; return; }
+    const t0 = performance.now();
+    const tick = (t) => { const p = Math.min(1, (t - t0) / 450), e = 1 - Math.pow(1 - p, 3); el.textContent = fmt(from + (to - from) * e, d) + suffix; if (p < 1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  }
+
+  let lastMood = "";
+  function spark(kind) {
+    if (reduce) return;
+    const bot = $("bot");
+    for (let k = 0; k < 3; k++) {
+      const s = document.createElement("div"); s.className = "spark"; s.innerHTML = ICON[kind === "bolt" ? "bolt" : "sun"];
+      s.style.left = (40 + Math.random() * 70) + "px"; s.style.top = (kind === "bolt" ? 70 : 120) + "px";
+      s.style.setProperty("--dx", (Math.random() * 40 - 20) + "px"); s.style.animationDelay = (k * 0.15) + "s";
+      bot.appendChild(s); setTimeout(() => s.remove(), 2200);
+    }
+  }
+
+  function render() {
+    const w = DATA.weeks[wk], hs = w.hours, h = hs[hour];
+    $("hour").value = hour;
+    $("clock").textContent = `${h.d} ${h.dd} · ${String(h.h).padStart(2, "0")}:00`;
+    $("who").textContent = `Volta · ${h.d} ${h.dd} · ${String(h.h).padStart(2, "0")}:00`;
+    const m = message(hs, hour);
+    type(m.msg); $("tip").innerHTML = m.tip;
+    if (m.mood !== lastMood) { const md = $("mood"); md.innerHTML = ICON[m.mood]; md.classList.remove("pop"); void md.offsetWidth; md.classList.add("pop"); lastMood = m.mood; }
+    if (m.mood === "sun" || m.mood === "bolt") spark(m.mood);
+    $("mouth").setAttribute("d", m.mood === "bolt" ? "M64 103q11 12 22 0" : m.mood === "moon" ? "M66 106h18" : "M64 105q11 9 22 0");
+    const pct = h.soc / 60;
+    $("fill").style.transform = `scaleY(${Math.max(0.02, pct / 100)})`;
+    $("k-socbar").style.width = pct + "%";
+    let co2 = 0, eur = 0, sol = 0;
+    for (let i = 0; i <= hour; i++) { co2 += hs[i].co2; eur += hs[i].eur; sol += hs[i].sol; }
+    count("k-soc", pct, " %"); count("k-co2", co2); count("k-eur", eur); count("k-sol", sol);
+    const svg = $("chart");
+    const cx = xOf(hour);
+    const cur = $("cur"), dot = $("dot");
+    if (cur) { cur.style.transform = `translateX(${cx}px)`; dot.style.transform = `translate(${cx}px, ${yP(h.a)}px)`; }
+    svg.querySelectorAll(".b").forEach(b => b.classList.toggle("future", +b.dataset.i > hour));
+    const strip = $("strip"); strip.innerHTML = "";
+    for (let k = 0; k < 24; k++) {
+      const x = hs[Math.min(167, hour + k)], c = document.createElement("div");
+      c.className = "cell" + (x.a > 50 ? " c" : x.a < -50 ? " d" : "") + (k === 0 ? " now" : "");
+      c.title = `${x.h}:00 · ${x.a > 50 ? "carga " + fmt(x.a) : x.a < -50 ? "descarga " + fmt(-x.a) : "espera"} kW`;
+      c.innerHTML = `<span class="${k % 6 === 0 ? "show" : ""}">${x.h}h</span>`;
+      strip.appendChild(c);
+    }
+    const day = hs.slice(Math.floor(hour / 24) * 24, Math.floor(hour / 24) * 24 + 24);
+    const avgP = day.reduce((s, x) => s + x.p, 0) / day.length, avgC = day.reduce((s, x) => s + x.c, 0) / day.length;
+    $("why").innerHTML = `
+      <div class="fact"><div class="t">Precio ahora</div><div class="n">${fmt(h.p, 3)} €/kWh</div><div class="s">${h.p > avgP ? "por encima" : "por debajo"} de la media del día (${fmt(avgP, 3)})</div></div>
+      <div class="fact"><div class="t">CO₂ de la red</div><div class="n">${fmt(h.c * 1000)} g/kWh</div><div class="s">${h.c > avgC ? "más sucia" : "más limpia"} que la media del día (${fmt(avgC * 1000)})</div></div>
+      <div class="fact"><div class="t">Sol frente a consumo</div><div class="n">${fmt(h.pv)} / ${fmt(h.load)} kW</div><div class="s">${h.net < 0 ? "sobran " + fmt(-h.net) + " kW de sol" : "la red aporta " + fmt(h.net) + " kW antes de la batería"}</div></div>`;
+  }
+
+  function setWeek(i, keepHour) {
+    wk = i;
+    if (!keepHour) { const hs0 = DATA.weeks[i].hours; const k = hs0.findIndex(x => x.a > 50 && x.net < 0); hour = k >= 0 ? k : 13; }
+    document.querySelectorAll("#weeks button").forEach((b, k) => b.setAttribute("aria-pressed", k === i ? "true" : "false"));
+    const w = DATA.weeks[i];
+    $("wk-title").textContent = `${w.label}: score ${fmt(w.score, 2)} (cota con información perfecta ${fmt(w.pf, 2)})`;
+    $("foot").textContent = `Semanas de ejemplo del año de entrenamiento oficial (data/train), simuladas con las reglas del modo difícil. Decisiones del agente hard_v6: solo ve 3 h de precio y CO₂, prevé el resto, y ${w.infr === 0 ? "0 infracciones" : w.infr + " infracciones"}. Esta semana: ${fmt(w.kg)} kg de CO₂ evitados, ${fmt(w.eur)} € ahorrados y ${fmt(w.solar_mwh, 1)} MWh de sol guardados de ${fmt(w.surplus_mwh, 1)} MWh que sobraban.`;
+    drawChart(); render();
+  }
+
+  function setPlay(on) {
+    clearInterval(timer); timer = null;
+    $("play").setAttribute("aria-pressed", on ? "true" : "false");
+    $("play").innerHTML = on ? "❚❚ Pausa" : "▶ Reproducir";
+    if (on) timer = setInterval(() => { hour = (hour + 1) % 168; render(); }, 1300);
+  }
+
+  DATA.weeks.forEach((w, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = w.label; b.onclick = () => setWeek(i); $("weeks").appendChild(b); });
+  $("hour").addEventListener("input", (e) => { hour = +e.target.value; render(); });
+  $("play").addEventListener("click", () => setPlay(!timer));
+  setWeek(0);
+  setPlay(false);
+  if (!reduce) setTimeout(() => setPlay(true), 2500);
+})();
+</script>

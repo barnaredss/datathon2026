@@ -1,7 +1,8 @@
 # Qué decir en la presentación
 
 Equipo: **hackers la l** — Alexander Hall Parrilla y Oscar Senesi Aladjem.
-Presentación: `slides/presentacion.pptx` (15 diapositivas principales + 6 de apoyo).
+Presentación: `slides/presentacion.pptx` (17 diapositivas principales + 6 de apoyo).
+Bot Volta (demo): `ui/bot_local.html` (abrir en el navegador) o el enlace del artifact.
 Respuestas a preguntas: `slides/qa.md`.
 
 ## Antes de empezar
@@ -10,10 +11,10 @@ Respuestas a preguntas: `slides/qa.md`.
    `slides/build_deck.py` por vuestro mejor score público y regenerad:
    `./.venv/Scripts/python.exe slides/build_deck.py`
 2. Reparto sugerido: **Alexander** diapositivas 1–9 (problema, datos, idea, modo estándar);
-   **Oscar** 10–15 (modo difícil, descartes, recomendaciones, cierre).
-3. Duración: versión completa ≈ 6 min 30 s (unas 890 palabras). **Versión corta, ≈ 5 min 30 s: saltad
-   las diapositivas 4, 8 y 13** (marcadas abajo con ⏭). Si necesitáis bajar a 5 min justos, acortad
-   también la 14 a su primera frase.
+   **Oscar** 10–17 (modo difícil, datos externos, bot Volta, descartes, recomendaciones, cierre).
+3. Duración: versión completa ≈ 7 min 30 s. **Versión corta, ≈ 6 min: saltad las diapositivas 4, 8 y
+   15** (marcadas abajo con ⏭). Si necesitáis bajar a 5 min: saltad también la 16 y decid solo la primera
+   frase de la 14 (datos externos).
 4. No leáis las viñetas. Cada diapositiva tiene una sola idea: decidla y pasad.
 
 ## Los números que hay que saber de memoria
@@ -102,8 +103,7 @@ de lo que el campus consume, y lo que sobra se pierde.»
 **Idea: mismo optimizador, tres previsiones, y prudencia.**
 «Mantenemos el mismo programa lineal y le damos tres previsiones. El precio y el CO2, con una regresión
 por cada hora de adelanto. La demanda, con la última medida y el perfil semanal. Y la solar de la hora
-en curso, con un modelo de árboles. Si un laborable se comporta como un festivo, prevemos los días
-siguientes con forma de domingo. Como la consigna es fija durante la hora y la demanda real no se
+en curso, con un modelo de árboles. Y usamos el calendario de festivos del campus. Como la consigna es fija durante la hora y la demanda real no se
 conoce, descargamos con prudencia: más cuando la hora vale mucho, menos cuando es dudosa. En la figura,
 el verde es nuestro agente y el azul el plan que conoce el futuro: operan casi igual.»
 
@@ -115,24 +115,41 @@ y el CO2 reales llegaría al 96 %; con la demanda de la hora en curso, también 
 cosas que no se pueden saber, y valen lo mismo. En el leaderboard público, 23,44.»
 *(Si hard_v5 ha subido más, decid vuestro número.)*
 
-### 13. Lo que probamos y descartamos (5:30 – 5:50) ⏭
+### 13. Datos externos (5:30 – 6:00) · Oscar
+**Idea: usamos lo que un operador real sabría de antemano, y nada más.**
+«También buscamos datos fuera del paquete oficial. El calendario sí: festivos de Catalunya y de Barcelona
+y los periodos no lectivos de la UPC. Los datos lo confirman: un festivo se comporta como un domingo, y la
+Semana Santa, a medio camino. Y las semanas de test están llenas de ellos: la Mercè, Navidad, Semana
+Santa, Sant Joan, el final de agosto. Con el calendario, el agente mejora 0,155 puntos fuera de muestra en
+semanas con festivos. Lo que no usamos es el tiempo ni los precios reales de esas semanas: eso no es
+prever, es conocer la respuesta.»
+
+### 14. Volta, el bot (6:00 – 6:30)
+**Idea: la optimización explicada a quien usa el campus.**
+«Y para que todo esto sirva fuera del leaderboard, hicimos Volta. Hora a hora dice qué hace la batería y
+por qué, y qué conviene hacer en el campus: ahora sobra sol, encended lo que podáis; ahora la red es cara
+y sucia, aplazad lo que se pueda. Y va contando el CO2 evitado, los euros y el sol que se habría perdido.»
+*(Si hay tiempo, enseñadlo 15 segundos en directo: botón Reproducir.)*
+
+### 15. Lo que probamos y descartamos (6:30 – 6:50) ⏭
 **Idea: decidimos con números, y lo que no funcionó lo decimos.**
 «También descartamos cosas con números. En el estándar, predecir demanda suma siete milésimas. En el
 difícil, modelos más complejos para el precio no mejoran a la regresión. Y una hipótesis que falló:
 pensamos que la semana de noviembre vendría sin demanda, protegimos el agente, y el resultado fue
 idéntico. Se queda como robustez, no como puntos.»
 
-### 14. Recomendaciones para UPC Sostenible (5:50 – 6:15)
+### 16. Recomendaciones para UPC Sostenible (6:50 – 7:15)
 **Idea: el optimizador también sirve para planificar.**
 «El mismo optimizador responde preguntas de inversión. Energía y potencia se necesitan mutuamente:
 duplicar una da un 22 % más; duplicar las dos, casi el doble. Cada punto de rendimiento vale unos
 1.900 euros al año. Y si no hubiera optimizador, un horario fijo —cargar de doce a cuatro, descargar
 por la tarde— logra el 79 % del óptimo.»
 
-### 15. Conclusiones (6:15 – 6:35)
+### 17. Conclusiones (7:15 – 7:35)
 **Idea: óptimo donde se puede demostrar, medido donde no.**
 «Resumiendo. En el modo estándar el problema se reduce a una señal y un programa lineal, y estamos en
-el óptimo. En el difícil, al 93 % solo con previsiones, y sabemos exactamente qué falta. Con la batería
+el óptimo. En el difícil, al 93 % con previsiones y el calendario del campus, y sabemos exactamente
+qué falta. Y Volta lo explica a quien usa el campus. Con la batería
 actual, unas 42 toneladas de CO2 y 91.000 euros al año. Gracias.»
 
 ## Lo que NO hay que decir
@@ -141,6 +158,7 @@ actual, unas 42 toneladas de CO2 y 91.000 euros al año. Gracias.»
 - No presentéis la protección ante averías como una ganancia: en este test no dio puntos.
 - No digáis «predecimos la demanda» en el modo estándar: ahí justamente demostramos que no hace falta.
 - No citéis precios de baterías ni del carbono en el mercado como datos: no están en los datos oficiales.
+- No digáis que usamos el tiempo real: solo el calendario, que se conoce de antemano.
 - No habléis de otros equipos. Si preguntan por puntuaciones más altas en el modo difícil, usad la
   pregunta 19 de `qa.md`.
 

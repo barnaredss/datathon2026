@@ -54,7 +54,7 @@ Porque el óptimo es el mismo para todos. Y las diferencias pequeñas no son fia
 Porque ahí hay que prever. Lo medimos dando al agente información perfecta por partes: con precio y CO2 reales a 24 h llegaría a 21,44 (96 %); con la demanda neta real de la hora en curso, a 21,33 (96 %); con ambas, a 21,97 (98,6 %). Son dos pérdidas de tamaño parecido y ninguna se puede eliminar del todo. Fuente: hard_findings.md, punto 3.
 
 **18. ¿Usáis datos externos o del periodo de test?**
-No. Solo `data/train`. Las 48 h con las que arranca cada semana son del entrenamiento: el entrenamiento llega hasta la víspera de cada semana de test. Los perfiles, la regresión y los árboles se ajustan con ese mismo año. Fuente: hard_findings.md, puntos 4 y 5; `tools/hard.py`.
+Datos externos, solo uno: el calendario público de festivos (Catalunya y Barcelona) y de periodos no lectivos de la UPC 2025-26, que un operador conoce de antemano. Lo validamos con los datos de entrenamiento (un festivo se comporta como un domingo) y aporta +0,155 fuera de muestra en semanas con festivos. Nada del periodo de test: ni tiempo, ni precios, ni demanda reales. Las 48 h con las que arranca cada semana son del entrenamiento, que llega hasta la víspera de cada semana de test. Fuente: hard_findings.md, puntos 5 y 9.
 
 **19. Hay equipos con más puntuación en el modo difícil. ¿Por qué?**
 No conocemos su método. Lo que sí medimos: en la mitad pública del test el caso base es un 20 % menor por hora que en nuestras semanas de validación, y con menos demanda la cota de información perfecta sube mucho (con la demanda al 80 %, de 22,3 a 29,0). El mejor equipo evita 16,2 kg/h, lo mismo que nuestra cota en validación. Nuestro agente queda en el 90–93 % de la cota en todos los escenarios que simulamos, sin datos externos ni datos del periodo de test. El ranking que decide es el privado. Fuente: hard_findings.md, puntos 6 y 8.
@@ -67,3 +67,6 @@ Porque lo comprobamos. Para precio y CO2 los árboles no mejoran a la regresión
 
 **22. ¿Cuánto tarda y qué pasa si algo falla en el modo difícil?**
 Entre 6 y 11 s para las 2.016 h (límite 60 s) y 0 infracciones. Si el solver fallara hay una política de respaldo por horas, y todas las consignas pasan por el recorte de seguridad con la capacidad y la potencia que da el propio simulador. Fuente: hard_findings.md, punto 2.
+
+**23. ¿Qué es Volta?**
+Una página que explica, hora a hora, qué hace la batería y por qué, y qué conviene hacer en el campus (consumir cuando sobra sol o la red está limpia, aplazar cuando está cara y sucia). Muestra tres semanas de ejemplo del año de entrenamiento simuladas con nuestro agente del modo difícil y cuenta el CO2 evitado, los euros y el sol guardado. Fuente: ui/build_bot.py.
