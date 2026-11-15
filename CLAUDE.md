@@ -97,8 +97,8 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
 - Code comments and docstrings of the agent, all figures, slides and the pitch are in SPANISH
   (the jury audits the code). Internal tooling, plan and reports are in English.
 - Never commit `.env`, `.venv/`, `_download/`, `data/train/`.
-- GitHub: private repo https://github.com/barnaredss/datathon2026 (remote `origin`). The user asked to keep
-  pushing changes: commit and `git push` after each completed change.
+- GitHub: https://github.com/barnaredss/datathon2026 (remote `origin`). FROZEN since the deadline (Sun 15 Nov 2026):
+  NEVER commit or push. A late commit can invalidate the project. Leave local edits uncommitted.
 
 ## Commands (Windows, Git Bash)
 - Python: `./.venv/Scripts/python.exe` (3.14; numpy, pandas, scipy, sklearn, lightgbm, xgboost, matplotlib)

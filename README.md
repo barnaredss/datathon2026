@@ -6,15 +6,31 @@ Un agente que decide cada hora cuánto cargar o descargar la batería del campus
 (70 % del Score) y la factura (30 %), y **Volta**, una página que explica cada decisión y dice al
 campus qué conviene hacer en ese momento.
 
+![Volta, el bot de la batería](figures/ui_bot_crop.png)
+
+## El motor en una idea
+
+El Score del reto es **lineal** en la energía que el campus importa de la red. Con el caso base fijo,
+reducir CO₂ y coste equivale a **minimizar, hora a hora, `importación × w`**, con una única señal
+`w = CO₂ + λ·precio` (λ sale de la propia fórmula 70/30). Así que el problema es un **programa lineal**:
+
+1. **Leer** el precio y el CO₂ conocidos y el nivel de la batería.
+2. **Optimizar** con HiGHS el plan exacto de carga y descarga de las próximas horas (rendimiento, capacidad
+   y potencia incluidos).
+3. **Actuar** solo en la primera hora, con un recorte de seguridad (0 infracciones), y repetir cada hora.
+
+En el modo estándar basta eso: la solar es el 2,4 % de la demanda y la demanda neta supera los 500 kW de la
+batería el 99,5 % de las horas, así que no hay nada que predecir. En el modo difícil se mantiene el mismo
+optimizador, pero alimentado con previsiones (precio y CO₂, demanda y solar) y con una descarga prudente,
+porque lo que el campus no consume se pierde.
+
 ## Resultados
 
-| Modo | Agente | Leaderboard público | Frente a la cota con información perfecta (validación local) |
-|---|---|---|---|
-| Estándar (2.000 kWh, ±500 kW, 24 h de precio y CO₂) | `submissions/v3_load_aware` | **6,43**, 0 infracciones | 99,85 % (año de entrenamiento) · 99,99 % (semanas tipo test) |
-| Difícil (6.000 kWh, ±1.500 kW, solar ×12, solo 3 h de mercado) | `submissions/hard_v6` | **23,44** (hard_v4) | 93,4 % (20,81 de 22,28) |
-
-Con la batería actual, el agente estándar evita unas **42 t de CO₂ y 91.000 € al año** (anualizado
-desde el año de entrenamiento).
+- Con la batería actual: unas **42 t de CO₂ y 91.000 € al año** evitados (anualizado desde el año de entrenamiento).
+- Modo estándar: el agente evita el **99,85 %** del beneficio de un plan que conoce el año entero (5,6667 frente a
+  5,6753 de Score en entrenamiento) y 0 infracciones.
+- Modo difícil: el agente local llega al **93 %** de ese plan perfecto con solo 3 h de mercado; con la solar de
+  la hora o el precio de mañana conocidos, llegaría al 96 %. Detalle en `analysis/hard_findings.md`.
 
 ## La idea
 
@@ -48,7 +64,7 @@ Página interactiva (HTML + SVG, sin dependencias) con tres semanas de ejemplo s
 modo difícil: Volta se pone gafas de sol cuando carga con sol, frunce el ceño cuando descarga en horas de
 más CO₂ y duerme cuando espera, y va contando el CO₂ evitado, los euros y el sol guardado.
 
-- Abrir `ui/bot_local.html` en cualquier navegador.
+- Abrir `ui/bot_local.html` en cualquier navegador (ver la captura de arriba).
 - Regenerar: `./.venv/Scripts/python.exe -m ui.build_bot`
 
 ## Estructura
