@@ -18,10 +18,12 @@ in reserve (see "Handover"). Deadline: submissions close Sunday 15 Nov between 1
 | T5b | Meter-outage robustness study + agent v2 | Both | P0 | orchestrator | DONE — `analysis/outage_findings.md` |
 | T5c | Low-demand weeks study + agent v3 (after organisers said nobody is at the private maximum) | Both | P0 | orchestrator | DONE — `analysis/lowload_findings.md`, `analysis/split_noise_findings.md` |
 | T1c | Submit v3, log result; ask organisers how the final ranking is computed and which submission counts | Agent | P0 | **humans** | TODO — `submissions/v3_load_aware/agent.py` |
-| T7b | Fold v3, hard mode and the split-noise finding into the deck, script and Q&A | Jury | P1 | orchestrator | TODO |
+| T7b | Fold v3, hard mode and the split-noise finding into the deck, script and Q&A | Jury | P1 | orchestrator | DONE (Sun 10:50) — 15 main slides + 6 backup; `slides/guion.md` is the speaking guide; `slides/qa.md` has 22 questions; `analysis/hard_findings.md` |
 | H1 | Hard mode: simulator, bound, agent hard_v2 (20.58 local vs 22.28 ceiling) | Agent | P0 | orchestrator | DONE — `tools/hard.py`, `agent_hard/agent.py` |
 | H2 | Upload hard_v2 in the Mode Difícil tab, report public score; mark the 2 final standard-mode submissions (v3, v2) | Agent | P0 | **humans** | TODO |
-| H3 | Hard mode: improve forecasts (price/CO2 worth up to +0.8, current-hour solar up to +1.0, first day of each week) | Agent | P0 | orchestrator | TODO — needs the public score of H2 to calibrate |
+| H3 | Hard mode: improve forecasts | Agent | P0 | orchestrator | DONE — hard_v4 (20.80 local, 93.3 % of the bound). hard_v3 scored 23.29 public. No further gain found with official data |
+| H4 | Upload hard_v4; mark the 2 final submissions in BOTH tabs (standard: v3 + v2; hard: hard_v4 + hard_v3); set `LB["hard"]` in `slides/build_deck.py` and rebuild; rehearse with `slides/guion.md` | Both | P0 | **humans** | TODO |
+| H5 | Sunday 10:25 board: 52 teams, record 24.37 ≈ 21.6 local-equivalent, above this agent with PERFECT 24 h price/CO2 (21.44). We do not use external or test-period data; do not chase that number | — | — | — | NOTE |
 | T6 | What-if study for UPC Sostenible | Jury | P1 | Sonnet | DONE — `analysis/whatif_findings.md`, 5 `figures/whatif_*` |
 | T7 | Slide deck, pitch script, Q&A sheet (Spanish) | Jury | P1 | Sonnet + orchestrator review | DONE — `slides/presentacion.pptx` (12 + 5 backup), `guion.md`, `qa.md`. Humans: set TEAM/MEMBERS in `slides/build_deck.py`, rebuild, review |
 | T8 | Final agent selection, code doc pass, freeze | Agent | P0 | orchestrator | TODO (Sunday) |

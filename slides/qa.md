@@ -47,3 +47,23 @@ Unas 42,3 t de CO2 y 91.380 EUR al año, anualizando el año de entrenamiento (5
 
 **16. ¿Por qué hay tantos equipos empatados, y qué significan las diferencias pequeñas?**
 Porque el óptimo es el mismo para todos. Y las diferencias pequeñas no son fiables: en semanas tipo test, mover λ de 0,18 a 0,32 cambia el score del test completo en 0,01, pero el de media semana hasta en 0,14, porque desplaza cargas y descargas entre la mitad pública y la privada. Lo que gana una mitad lo pierde la otra. Fuente: split_noise_findings.md, puntos 1 a 3.
+
+## Modo difícil
+
+**17. ¿Por qué en el modo difícil os quedáis en el 93 % y no en el 99 %?**
+Porque ahí hay que prever. Lo medimos dando al agente información perfecta por partes: con precio y CO2 reales a 24 h llegaría a 21,44 (96 %); con la demanda neta real de la hora en curso, a 21,33 (96 %); con ambas, a 21,97 (98,6 %). Son dos pérdidas de tamaño parecido y ninguna se puede eliminar del todo. Fuente: hard_findings.md, punto 3.
+
+**18. ¿Usáis datos externos o del periodo de test?**
+No. Solo `data/train`. Las 48 h con las que arranca cada semana son del entrenamiento: el entrenamiento llega hasta la víspera de cada semana de test. Los perfiles, la regresión y los árboles se ajustan con ese mismo año. Fuente: hard_findings.md, puntos 4 y 5; `tools/hard.py`.
+
+**19. Hay equipos con más puntuación en el modo difícil. ¿Por qué?**
+No lo sabemos. Lo que hemos medido es que nuestro agente, con precio y CO2 perfectos a 24 h, obtendría 21,44 en nuestras semanas de validación, que en la escala del leaderboard público son unos 24,1 (estimación con un único punto de calibración). También medimos que la puntuación de media semana se mueve décimas con cambios mínimos. El ranking que decide es el privado. Fuente: hard_findings.md, punto 6; split_noise_findings.md.
+
+**20. ¿Qué es la regla del cuantil?**
+La consigna es fija durante la hora, pero la demanda neta real no se conoce. Descargar de más se vierte a red y se pierde; descargar de menos deja energía sin usar. Lo óptimo es descargar hasta un cuantil de la demanda estimada que depende de cuánto vale la energía guardada frente a la señal de esa hora: más alto en las horas caras, más bajo en las dudosas. Aportó +0,05; la misma regla al cargar empeoraba (−0,3) y no se usa. Fuente: hard_findings.md, punto 5.
+
+**21. ¿Por qué árboles para la solar y regresión para el precio?**
+Porque lo comprobamos. Para precio y CO2 los árboles no mejoran a la regresión (mismo error a 12 h y peor a 3 h). Para la solar de la hora en curso sí: error medio de 91 kW frente a 111 kW de la persistencia. Los árboles se evalúan dentro de `agent.py`, sin librerías de modelos. Fuente: hard_findings.md, puntos 4 y 7.
+
+**22. ¿Cuánto tarda y qué pasa si algo falla en el modo difícil?**
+Entre 6 y 11 s para las 2.016 h (límite 60 s) y 0 infracciones. Si el solver fallara hay una política de respaldo por horas, y todas las consignas pasan por el recorte de seguridad con la capacidad y la potencia que da el propio simulador. Fuente: hard_findings.md, punto 2.
