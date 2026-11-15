@@ -129,7 +129,7 @@ prever, es conocer la respuesta.»
 «Y para que todo esto sirva fuera del leaderboard, hicimos Volta. Hora a hora dice qué hace la batería y
 por qué, y qué conviene hacer en el campus: ahora sobra sol, encended lo que podáis; ahora la red es cara
 y sucia, aplazad lo que se pueda. Y va contando el CO2 evitado, los euros y el sol que se habría perdido.»
-*(Si hay tiempo, enseñadlo 15 segundos en directo: botón Reproducir.)*
+*(Si hay tiempo, enseñadlo 20 segundos en directo: botón Reproducir a velocidad Normal; Volta se pone gafas de sol cuando carga con sol, frunce el ceño cuando descarga en horas de más CO₂ y duerme cuando espera.)*
 
 ### 15. Lo que probamos y descartamos (6:30 – 6:50) ⏭
 **Idea: decidimos con números, y lo que no funcionó lo decimos.**

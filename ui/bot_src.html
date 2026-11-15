@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
 <style>
-/* Layout: una columna estrecha. Volta y su mensaje arriba; batería y contadores; la semana entera en un gráfico; las próximas 24 h en una tira. */
+/* Layout: una columna amplia. Escena de Volta + mensaje; controles; contadores; la semana; las próximas 24 h. */
 :root {
   --bg: #F2F8F4;
   --surface: #FFFFFF;
@@ -14,7 +14,8 @@
   --leaf: #1C9A57;
   --charge: #2FB46E;
   --discharge: #0E4F33;
-  --sun: #D8E35A;
+  --sun: #E2C92E;
+  --smoke: #8E9B94;
   --signal: #7A9A88;
   --bubble: #E4F4EA;
   --f-display: "Outfit", "Segoe UI", system-ui, sans-serif;
@@ -24,71 +25,128 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0A1610; --surface: #10221A; --ink: #E4F3E9; --muted: #8DAE9B; --line: #1F3A2C;
-    --leaf: #3FCB80; --charge: #46D58A; --discharge: #B5EACB; --sun: #C9D648; --signal: #8FB09E; --bubble: #163326;
+    --leaf: #3FCB80; --charge: #46D58A; --discharge: #B5EACB; --sun: #E9D54A; --smoke: #6F7E76; --signal: #8FB09E; --bubble: #163326;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0A1610; --surface: #10221A; --ink: #E4F3E9; --muted: #8DAE9B; --line: #1F3A2C;
-  --leaf: #3FCB80; --charge: #46D58A; --discharge: #B5EACB; --sun: #C9D648; --signal: #8FB09E; --bubble: #163326;
+  --leaf: #3FCB80; --charge: #46D58A; --discharge: #B5EACB; --sun: #E9D54A; --smoke: #6F7E76; --signal: #8FB09E; --bubble: #163326;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
-.wrap { max-width: 1040px; margin: 0 auto; padding-block: 20px 40px;
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 28px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: grid; gap: 20px; }
+  display: grid; gap: 32px; }
 header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 600; font-size: 18px; }
 .brand svg { width: 26px; height: 26px; }
-.chip { font-family: var(--f-mono); font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
-h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw, 36px); line-height: 1.1; margin: 0; text-wrap: balance; }
+.chip { font-family: var(--f-mono); font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+.intro { display: grid; gap: 8px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 4.2vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; max-width: 62ch; }
 
-.hero { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; }
-.bot { position: relative; width: 150px; height: 180px; }
-.bot svg { width: 100%; height: 100%; overflow: visible; }
-.bob { animation: bob 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
-@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-.eye { animation: blink 4.6s infinite; transform-box: fill-box; transform-origin: center; }
+/* ---------- escena ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 28px; align-items: stretch; }
+.stage { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 14px 14px 12px; display: grid; gap: 10px; }
+.stage svg { width: 100%; height: auto; display: block; overflow: visible; }
+.state { justify-self: start; display: inline-flex; align-items: center; gap: 8px; font: 600 13px var(--f-body); padding: 6px 12px; border-radius: 999px; background: var(--bubble); }
+.state i { width: 9px; height: 9px; border-radius: 50%; background: var(--leaf); }
+.st-sun .state i { background: var(--sun); }
+.st-dis .state i { background: var(--discharge); }
+.st-idle .state i { background: var(--muted); }
+
+.ground { stroke: var(--line); stroke-width: 2; }
+.ico { fill: var(--surface); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.lbl { fill: var(--muted); font: 10px var(--f-mono); }
+.win { fill: var(--line); transition: fill 0.5s; }
+.st-sun .win { fill: var(--sun); }
+.st-dis .win { fill: var(--charge); }
+
+.flow { fill: none; stroke-linecap: round; stroke-width: 4; stroke-dasharray: 1 11; opacity: 0; transition: opacity 0.6s; animation: flow 0.9s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -12; } }
+.g2b { stroke: var(--charge); }
+.b2c { stroke: var(--charge); stroke-width: 5; }
+.s2b { stroke: var(--sun); stroke-width: 3.5; stroke-dasharray: 6 9; animation-duration: 0.7s; }
+.g2c { stroke: var(--smoke); }
+.st-grid .g2b, .st-dis .b2c, .st-sun .s2b { opacity: 1; }
+.g2c { opacity: var(--imp, 0.6); }
+
+.sun { transform: translateY(50px); opacity: 0; transition: transform 0.9s cubic-bezier(.2,.8,.2,1), opacity 0.6s; }
+.st-sun .sun { transform: none; opacity: 1; }
+.rays { transform-box: fill-box; transform-origin: center; animation: spin 12s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.smoke { opacity: var(--smoke-level, 0.5); transition: opacity 0.6s; }
+.st-sun .smoke { opacity: calc(var(--smoke-level, 0.5) * 0.3); }
+.puff { fill: var(--smoke); transform-box: fill-box; transform-origin: center; animation: puff 3.2s ease-out infinite; }
+.puff:nth-child(2) { animation-delay: 1.05s; }
+.puff:nth-child(3) { animation-delay: 2.1s; }
+@keyframes puff { from { transform: translate(0, 0) scale(0.5); opacity: 0.9; } to { transform: translate(14px, -46px) scale(1.6); opacity: 0; } }
+
+.bot { animation: bob 3.2s ease-in-out infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.st-dis .bot { animation: bob 1.6s ease-in-out infinite; }
+.halo { fill: var(--leaf); opacity: 0; transform-box: fill-box; transform-origin: center; }
+.st-dis .halo, .st-sun .halo { animation: halo 1.8s ease-out infinite; }
+.st-sun .halo { fill: var(--sun); }
+@keyframes halo { from { opacity: 0.35; transform: scale(0.95); } to { opacity: 0; transform: scale(1.25); } }
+.fill { fill: var(--charge); transform-box: fill-box; transform-origin: 50% 100%; transition: transform 0.8s cubic-bezier(.2,.8,.2,1); }
+.st-sun .fill { fill: var(--sun); }
+.bub { fill: var(--surface); opacity: 0; }
+.st-sun .bub, .st-grid .bub { animation: bub 1.8s ease-in infinite; }
+.bub:nth-child(2) { animation-delay: 0.45s; } .bub:nth-child(3) { animation-delay: 0.9s; } .bub:nth-child(4) { animation-delay: 1.35s; }
+@keyframes bub { from { transform: translateY(0); opacity: 0.8; } to { transform: translateY(-70px); opacity: 0; } }
+.eyes .eye { animation: blink 4.6s infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
-.fill { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 0.6s cubic-bezier(.2,.8,.2,1); fill: var(--charge); }
-.mood { position: absolute; right: -6px; top: 6px; width: 44px; height: 44px; border-radius: 50%; background: var(--surface);
-  border: 2px solid var(--line); display: grid; place-items: center; }
-.mood svg { width: 24px; height: 24px; }
-.pop { animation: pop 0.45s cubic-bezier(.3,1.6,.5,1); }
-@keyframes pop { from { transform: scale(0.4); } to { transform: scale(1); } }
-.spark { position: absolute; pointer-events: none; width: 14px; height: 14px; animation: rise 1.6s ease-out forwards; }
-@keyframes rise { from { transform: translate(0, 0) scale(0.6); opacity: 1; } to { transform: translate(var(--dx), -70px) scale(1.1); opacity: 0; } }
+.shades, .closed, .brows { opacity: 0; transition: opacity 0.3s; }
+.st-sun .shades, .st-idle .closed, .st-dis .brows { opacity: 1; }
+.st-sun .eyes, .st-idle .eyes { opacity: 0; }
+.eyes { transition: opacity 0.3s; }
+.zz { fill: var(--muted); font: 600 14px var(--f-display); opacity: 0; }
+.st-idle .zz { animation: zz 2.7s ease-out infinite; }
+.zz:nth-child(2) { animation-delay: 0.9s; } .zz:nth-child(3) { animation-delay: 1.8s; }
+@keyframes zz { from { transform: translate(0, 0); opacity: 0.9; } to { transform: translate(16px, -34px); opacity: 0; } }
+.floaty { font: 700 13px var(--f-display); fill: var(--leaf); opacity: 0; }
+.floaty.go { animation: floaty 2.4s ease-out forwards; }
+@keyframes floaty { 0% { transform: translateY(8px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-26px); opacity: 0; } }
 
-.speech { background: var(--bubble); border-radius: 18px 18px 18px 4px; padding: 16px 18px; min-width: 0; position: relative; }
-.speech .who { font-family: var(--f-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
-.speech .msg { font-family: var(--f-display); font-weight: 600; font-size: clamp(18px, 2.6vw, 24px); line-height: 1.25; margin: 4px 0 6px; min-height: 2.5em; }
-.speech .tip { color: var(--ink); }
-.speech .tip b { color: var(--leaf); font-weight: 600; }
-.caret { display: inline-block; width: 2px; height: 1em; background: var(--leaf); vertical-align: -0.12em; margin-left: 2px; animation: caret 0.8s steps(1) infinite; }
+/* ---------- mensaje ---------- */
+.speech { background: var(--bubble); border-radius: 22px; padding: 24px 26px; min-width: 0; display: grid; gap: 14px; align-content: center; }
+.who { font-family: var(--f-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+.msg { font-family: var(--f-display); font-weight: 600; font-size: clamp(20px, 2.5vw, 26px); line-height: 1.3; margin: 0; min-height: 2.6em; text-wrap: pretty; }
+.tip { margin: 0; color: var(--ink); max-width: 60ch; }
+.tip b { color: var(--leaf); font-weight: 600; }
+.caret { display: inline-block; width: 2px; height: 1em; background: var(--leaf); vertical-align: -0.12em; margin-left: 3px; animation: caret 0.8s steps(1) infinite; }
 @keyframes caret { 50% { opacity: 0; } }
 
-.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+/* ---------- controles ---------- */
+.controls { display: grid; gap: 14px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); flex-wrap: wrap; }
-.seg button { border: 0; background: transparent; color: var(--muted); font: 500 13px var(--f-body); padding: 8px 12px; cursor: pointer; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: 500 13.5px var(--f-body); padding: 9px 14px; cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--leaf); color: var(--surface); }
-.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 8px 14px; font: 600 13px var(--f-body); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-.btn:hover, .seg button:hover { filter: brightness(0.97); }
+.btn { border: 0; background: var(--ink); color: var(--bg); border-radius: 12px; padding: 10px 18px; font: 600 14px var(--f-body); cursor: pointer; min-width: 132px; }
+.btn[aria-pressed="true"] { background: var(--leaf); color: var(--surface); }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
-.scrub { flex: 1 1 220px; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.scrub { flex: 1 1 260px; display: flex; align-items: center; gap: 12px; min-width: 0; }
 .scrub input { flex: 1; accent-color: var(--leaf); min-width: 0; }
 .clock { font-family: var(--f-mono); font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 2px; }
-.kpi .v { font-family: var(--f-display); font-weight: 700; font-size: clamp(22px, 3vw, 30px); font-variant-numeric: tabular-nums; }
-.kpi .l { font-size: 12.5px; color: var(--muted); }
-.kpi .bar { height: 6px; border-radius: 6px; background: var(--line); overflow: hidden; margin-top: 6px; }
-.kpi .bar i { display: block; height: 100%; background: var(--leaf); border-radius: 6px; transition: width 0.6s cubic-bezier(.2,.8,.2,1); }
+/* ---------- contadores ---------- */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; display: grid; gap: 4px; }
+.kpi .v { font-family: var(--f-display); font-weight: 700; font-size: clamp(24px, 3vw, 32px); font-variant-numeric: tabular-nums; }
+.kpi .l { font-size: 13px; color: var(--muted); }
+.kpi .bar { height: 6px; border-radius: 6px; background: var(--line); overflow: hidden; margin-top: 8px; }
+.kpi .bar i { display: block; height: 100%; background: var(--leaf); border-radius: 6px; transition: width 0.8s cubic-bezier(.2,.8,.2,1); }
 
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
-.panel h2 { font-family: var(--f-display); font-weight: 600; font-size: 18px; margin: 0; }
-.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--muted); }
+/* ---------- paneles ---------- */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 22px 24px; display: grid; gap: 14px; min-width: 0; }
+.panel h2 { font-family: var(--f-display); font-weight: 600; font-size: 19px; margin: 0; }
+.panel .note { color: var(--muted); font-size: 13px; margin: -6px 0 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 .chartbox { overflow-x: auto; }
@@ -99,38 +157,38 @@ svg.chart { width: 100%; min-width: 560px; height: auto; display: block; }
 .chart .b { transform-box: fill-box; transition: transform 0.5s cubic-bezier(.2,.8,.2,1), opacity 0.3s; }
 .chart .b.up { fill: var(--charge); transform-origin: 50% 100%; }
 .chart .b.dn { fill: var(--discharge); transform-origin: 50% 0%; }
-.chart .b.future { opacity: 0.32; }
-.chart .solar { fill: var(--sun); opacity: 0.45; }
+.chart .b.future { opacity: 0.3; }
+.chart .solar { fill: var(--sun); opacity: 0.35; }
 .chart .sig { fill: none; stroke: var(--signal); stroke-width: 1.6; stroke-dasharray: 4 3; }
-.chart .cursor { stroke: var(--ink); stroke-width: 1.5; transition: transform 0.35s ease; }
-.chart .dot { fill: var(--leaf); stroke: var(--surface); stroke-width: 2; transition: transform 0.35s ease; }
+.chart .cursor { stroke: var(--ink); stroke-width: 1.5; transition: transform 0.4s ease; }
+.chart .dot { fill: var(--leaf); stroke: var(--surface); stroke-width: 2; transition: transform 0.4s ease; }
 
-.strip { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 3px; }
-.cell { height: 46px; border-radius: 6px; background: var(--line); position: relative; transition: background 0.3s, transform 0.3s; }
+.strip-wrap { padding-bottom: 20px; }
+.strip { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 4px; }
+.cell { height: 50px; border-radius: 7px; background: var(--line); position: relative; transition: background 0.4s, transform 0.4s; }
 .cell.c { background: var(--charge); }
+.cell.s { background: var(--sun); }
 .cell.d { background: var(--discharge); }
-.cell.now { transform: translateY(-4px); box-shadow: 0 0 0 2px var(--ink); }
-.cell span { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font: 10px var(--f-mono); color: var(--muted); }
-.strip-wrap { padding-bottom: 18px; }
+.cell.now { transform: translateY(-5px); box-shadow: 0 0 0 2px var(--ink); }
+.cell span { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font: 10px var(--f-mono); color: var(--muted); }
 
-.why { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.fact { border-left: 3px solid var(--leaf); padding: 2px 0 2px 12px; min-width: 0; }
-.fact .t { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.fact .n { font-family: var(--f-display); font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; }
+.why { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.fact { border-left: 3px solid var(--leaf); padding: 2px 0 2px 14px; min-width: 0; display: grid; gap: 2px; }
+.fact .t { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.fact .n { font-family: var(--f-display); font-weight: 600; font-size: 21px; font-variant-numeric: tabular-nums; }
 .fact .s { font-size: 13px; color: var(--muted); }
-footer { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
+footer { font-size: 12.5px; color: var(--muted); max-width: 75ch; }
 
-@media (max-width: 720px) {
-  .hero { grid-template-columns: 1fr; justify-items: center; }
-  .speech { width: 100%; border-radius: 18px; }
+@media (max-width: 820px) {
+  .hero { grid-template-columns: 1fr; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .why { grid-template-columns: 1fr; }
+  .why { grid-template-columns: 1fr; gap: 16px; }
   .cell span { display: none; }
   .cell span.show { display: block; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bob, .eye, .caret { animation: none; }
-  .chart .b, .fill, .kpi .bar i, .cell, .chart .cursor, .chart .dot { transition: none; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .st-sun .sun { opacity: 1; transform: none; }
 }
 </style>
 
@@ -143,40 +201,84 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
     <span class="chip">Modo difícil · 6.000 kWh · ±1.500 kW · solar ×12</span>
   </header>
 
-  <h1>Volta te dice qué hacer con la energía del campus, hora a hora</h1>
+  <div class="intro">
+    <h1>Volta, el bot de la batería del campus</h1>
+    <p class="sub">Hora a hora, Volta te cuenta qué hace la batería, por qué lo hace y qué conviene hacer en el campus.</p>
+  </div>
 
-  <section class="hero" aria-live="polite">
-    <div class="bot" id="bot">
-      <svg viewBox="0 0 150 180" aria-label="Volta, el bot de la batería">
-        <defs><clipPath id="body"><rect x="27" y="42" width="96" height="128" rx="22"/></clipPath></defs>
-        <g class="bob">
-          <path d="M75 30c0-12 8-20 22-22-1 14-9 21-22 22Z" fill="var(--leaf)"/>
-          <rect x="58" y="28" width="34" height="16" rx="5" fill="var(--ink)"/>
-          <rect x="27" y="42" width="96" height="128" rx="22" fill="var(--surface)"/>
-          <g clip-path="url(#body)"><rect id="fill" class="fill" x="27" y="42" width="96" height="128"/></g>
-          <rect x="27" y="42" width="96" height="128" rx="22" fill="none" stroke="var(--ink)" stroke-width="4"/>
-          <rect x="41" y="74" width="68" height="44" rx="14" fill="var(--surface)" opacity="0.92"/>
-          <ellipse class="eye" cx="61" cy="92" rx="6" ry="7" fill="var(--ink)"/>
-          <ellipse class="eye" cx="89" cy="92" rx="6" ry="7" fill="var(--ink)"/>
-          <path id="mouth" d="M64 105q11 9 22 0" fill="none" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round"/>
+  <section class="hero" id="scene" aria-live="polite">
+    <div class="stage">
+      <svg viewBox="0 0 360 214" role="img" aria-label="Escena: red eléctrica, Volta y el campus">
+        <line class="ground" x1="0" y1="200" x2="360" y2="200"/>
+        <!-- sol -->
+        <g class="sun">
+          <g class="rays" stroke="var(--sun)" stroke-width="3" stroke-linecap="round">
+            <path d="M306 14v-8M306 78v8M274 46h-8M338 46h8M283 23l-6-6M329 69l6 6M283 69l-6 6M329 23l6-6"/>
+          </g>
+          <circle cx="306" cy="46" r="18" fill="var(--sun)"/>
+        </g>
+        <!-- central de la red con humo -->
+        <g class="smoke"><circle class="puff" cx="54" cy="100" r="9"/><circle class="puff" cx="54" cy="100" r="9"/><circle class="puff" cx="54" cy="100" r="9"/></g>
+        <rect class="ico" x="46" y="108" width="15" height="42"/>
+        <path class="ico" d="M12 200V150l16-10v10l16-10v10l18-10v60Z"/>
+        <text class="lbl" x="37" y="212" text-anchor="middle">red</text>
+        <!-- campus -->
+        <rect class="ico" x="268" y="126" width="74" height="74" rx="4"/>
+        <g>
+          <rect class="win" x="278" y="138" width="14" height="13" rx="2"/><rect class="win" x="298" y="138" width="14" height="13" rx="2"/><rect class="win" x="318" y="138" width="14" height="13" rx="2"/>
+          <rect class="win" x="278" y="160" width="14" height="13" rx="2"/><rect class="win" x="298" y="160" width="14" height="13" rx="2"/><rect class="win" x="318" y="160" width="14" height="13" rx="2"/>
+        </g>
+        <rect x="298" y="182" width="14" height="18" fill="var(--ink)"/>
+        <text class="lbl" x="305" y="212" text-anchor="middle">campus</text>
+        <!-- flujos -->
+        <path class="flow g2c" d="M66 192 L 268 192"/>
+        <path class="flow g2b" d="M66 172 C 96 172, 104 158, 132 158"/>
+        <path class="flow b2c" d="M218 158 C 238 158, 246 166, 268 166"/>
+        <path class="flow s2b" d="M290 60 L 216 88"/>
+        <path class="flow s2b" d="M294 68 L 218 104"/>
+        <text class="floaty" id="floaty" x="305" y="118" text-anchor="middle"></text>
+        <!-- Volta -->
+        <g class="bot">
+          <rect class="halo" x="128" y="62" width="94" height="128" rx="24"/>
+          <path d="M175 58c0-11 7-18 20-20-1 13-8 19-20 20Z" fill="var(--leaf)"/>
+          <rect x="160" y="56" width="30" height="14" rx="4" fill="var(--ink)"/>
+          <clipPath id="bodyclip"><rect x="135" y="68" width="80" height="116" rx="18"/></clipPath>
+          <rect x="135" y="68" width="80" height="116" rx="18" fill="var(--surface)"/>
+          <g clip-path="url(#bodyclip)">
+            <rect id="fill" class="fill" x="135" y="68" width="80" height="116"/>
+            <g><circle class="bub" cx="150" cy="178" r="3"/><circle class="bub" cx="168" cy="180" r="2.5"/><circle class="bub" cx="186" cy="178" r="3"/><circle class="bub" cx="202" cy="180" r="2.5"/></g>
+          </g>
+          <rect x="135" y="68" width="80" height="116" rx="18" fill="none" stroke="var(--ink)" stroke-width="3.5"/>
+          <rect x="146" y="94" width="58" height="40" rx="13" fill="var(--surface)" opacity="0.94"/>
+          <g class="eyes"><ellipse class="eye" cx="164" cy="110" rx="5" ry="6" fill="var(--ink)"/><ellipse class="eye" cx="186" cy="110" rx="5" ry="6" fill="var(--ink)"/></g>
+          <g class="closed" stroke="var(--ink)" stroke-width="2.6" fill="none" stroke-linecap="round"><path d="M158 111q6 4 12 0"/><path d="M180 111q6 4 12 0"/></g>
+          <g class="shades" fill="var(--ink)"><rect x="154" y="103" width="19" height="12" rx="4"/><rect x="177" y="103" width="19" height="12" rx="4"/><rect x="172" y="106" width="6" height="2.5"/></g>
+          <g class="brows" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"><path d="M157 100l12 3"/><path d="M193 100l-12 3"/></g>
+          <path id="mouth" d="M166 122q9 7 18 0" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+          <g><text class="zz" x="214" y="70">z</text><text class="zz" x="214" y="70">z</text><text class="zz" x="214" y="70">z</text></g>
         </g>
       </svg>
-      <div class="mood" id="mood" aria-hidden="true"></div>
+      <span class="state"><i></i><span id="state">Cargando con sol</span></span>
     </div>
     <div class="speech">
-      <div class="who" id="who">Volta · lun 18/05 · 13:00</div>
+      <div class="who" id="who">Volta</div>
       <p class="msg"><span id="msg"></span><span class="caret" aria-hidden="true"></span></p>
-      <div class="tip" id="tip"></div>
+      <p class="tip" id="tip"></p>
     </div>
   </section>
 
   <div class="controls">
-    <div class="seg" id="weeks" role="group" aria-label="Semana de ejemplo"></div>
-    <button class="btn" id="play" type="button" aria-pressed="false"></button>
-    <div class="scrub">
-      <label for="hour" class="clock">Hora</label>
-      <input id="hour" type="range" min="0" max="167" step="1" value="13">
-      <span class="clock" id="clock"></span>
+    <div class="row">
+      <div class="seg" id="weeks" role="group" aria-label="Semana de ejemplo"></div>
+    </div>
+    <div class="row">
+      <button class="btn" id="play" type="button" aria-pressed="false">▶ Reproducir</button>
+      <div class="seg" id="speed" role="group" aria-label="Velocidad"></div>
+      <div class="scrub">
+        <label for="hour" class="clock">Hora</label>
+        <input id="hour" type="range" min="0" max="167" step="1" value="13">
+        <span class="clock" id="clock"></span>
+      </div>
     </div>
   </div>
 
@@ -184,22 +286,29 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
     <div class="kpi"><span class="v" id="k-soc">0 %</span><span class="l">Batería ahora</span><div class="bar"><i id="k-socbar"></i></div></div>
     <div class="kpi"><span class="v" id="k-co2">0</span><span class="l">kg de CO₂ evitados esta semana</span></div>
     <div class="kpi"><span class="v" id="k-eur">0</span><span class="l">€ ahorrados esta semana</span></div>
-    <div class="kpi"><span class="v" id="k-sol">0</span><span class="l">kWh de sol guardados (si no, se perdían)</span></div>
+    <div class="kpi"><span class="v" id="k-sol">0</span><span class="l">kWh de sol guardados</span></div>
   </div>
 
   <section class="panel">
     <h2 id="wk-title">La semana</h2>
+    <p class="note" id="wk-note"></p>
     <div class="legend">
       <span><i style="background:var(--charge)"></i>carga</span>
       <span><i style="background:var(--discharge)"></i>descarga</span>
-      <span><i style="background:var(--sun);opacity:.6"></i>solar del campus</span>
-      <span><i style="background:transparent;border-top:2px dashed var(--signal);height:0;border-radius:0"></i>señal CO₂ + λ·precio (cuanto más alta, más cara y sucia la red)</span>
+      <span><i style="background:var(--sun);opacity:.6"></i>solar</span>
+      <span><i style="background:transparent;border-top:2px dashed var(--signal);height:0;border-radius:0"></i>coste y CO₂ de la red</span>
     </div>
-    <div class="chartbox"><svg class="chart" id="chart" viewBox="0 0 960 270" role="img" aria-label="Potencia de la batería, solar y señal de la red durante la semana"></svg></div>
+    <div class="chartbox"><svg class="chart" id="chart" viewBox="0 0 960 300" role="img" aria-label="Potencia de la batería, solar y señal de la red durante la semana"></svg></div>
   </section>
 
   <section class="panel">
     <h2>Las próximas 24 horas</h2>
+    <div class="legend">
+      <span><i style="background:var(--sun)"></i>carga con sol</span>
+      <span><i style="background:var(--charge)"></i>carga de la red</span>
+      <span><i style="background:var(--discharge)"></i>descarga</span>
+      <span><i style="background:var(--line)"></i>espera</span>
+    </div>
     <div class="strip-wrap"><div class="strip" id="strip"></div></div>
   </section>
 
@@ -214,16 +323,10 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const fmt = (x, d = 0) => Number(x).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d });
   const $ = (id) => document.getElementById(id);
-  let wk = 0, hour = 13, timer = null;
+  const SPEEDS = [["Lento", 6000], ["Normal", 3800], ["Rápido", 1800]];
+  let wk = 0, hour = 13, timer = null, speed = 1;
 
-  const ICON = {
-    sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="var(--sun)" stroke="var(--ink)" stroke-width="1.5"/><g stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g></svg>',
-    plug: '<svg viewBox="0 0 24 24"><path d="M8 2v5M16 2v5" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><path d="M5 7h14v4a7 7 0 0 1-14 0Z" fill="var(--charge)" stroke="var(--ink)" stroke-width="1.6"/><path d="M12 18v4" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/></svg>',
-    bolt: '<svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7Z" fill="var(--leaf)" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/></svg>',
-    moon: '<svg viewBox="0 0 24 24"><path d="M20 15A8 8 0 1 1 9 4a7 7 0 0 0 11 11Z" fill="var(--bubble)" stroke="var(--ink)" stroke-width="1.6"/></svg>'
-  };
-
-  const W = 960, H = 270, L = 44, R = 50, T = 14, B = 36;
+  const W = 960, H = 300, L = 48, R = 54, T = 16, B = 38;
   const PW = W - L - R, PH = H - T - B, PMAX = 1700;
   const xOf = (i) => L + (i + 0.5) * PW / 168;
   const yP = (kw) => T + PH / 2 - (kw / PMAX) * (PH / 2);
@@ -231,10 +334,10 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
   function drawChart() {
     const w = DATA.weeks[wk], hs = w.hours, ns = "http://www.w3.org/2000/svg";
     const svg = $("chart"); svg.innerHTML = "";
-    const add = (tag, attrs, parent = svg) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
-    [-1500, -750, 750, 1500].forEach(v => { add("line", { class: "grid", x1: L, x2: W - R, y1: yP(v), y2: yP(v) }); add("text", { x: L - 6, y: yP(v) + 4, "text-anchor": "end" }).textContent = fmt(v); });
-    add("text", { x: L - 6, y: yP(0) + 4, "text-anchor": "end" }).textContent = "0";
-    add("text", { x: L - 6, y: H - B + 16, "text-anchor": "end" }).textContent = "kW";
+    const add = (tag, attrs) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
+    [-1500, -750, 750, 1500].forEach(v => { add("line", { class: "grid", x1: L, x2: W - R, y1: yP(v), y2: yP(v) }); add("text", { x: L - 8, y: yP(v) + 4, "text-anchor": "end" }).textContent = fmt(v); });
+    add("text", { x: L - 8, y: yP(0) + 4, "text-anchor": "end" }).textContent = "0";
+    add("text", { x: L - 8, y: H - B + 18, "text-anchor": "end" }).textContent = "kW";
     let sp = `M${xOf(0) - PW / 336},${yP(0)}`;
     hs.forEach((h, i) => { sp += ` L${xOf(i)},${yP(Math.min(h.pv, PMAX))}`; });
     sp += ` L${xOf(167) + PW / 336},${yP(0)} Z`;
@@ -263,28 +366,27 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
     requestAnimationFrame(() => requestAnimationFrame(() => svg.querySelectorAll(".b").forEach(b => b.style.transform = "scaleY(1)")));
   }
 
-  function nextHour(hs, i, pred) {
-    for (let k = i + 1; k < Math.min(hs.length, i + 25); k++) if (pred(hs[k])) return hs[k];
-    return null;
-  }
+  const nextHour = (hs, i, pred) => { for (let k = i + 1; k < Math.min(hs.length, i + 25); k++) if (pred(hs[k])) return hs[k]; return null; };
+  const kind = (h) => h.a > 50 ? (h.net < 0 ? "sun" : "grid") : h.a < -50 ? "dis" : "idle";
 
   function message(hs, i) {
-    const h = hs[i], a = h.a, soc = h.soc / 60;
+    const h = hs[i], a = h.a, soc = h.soc / 60, g = Math.round(h.c * 1000);
     const nd = nextHour(hs, i, x => x.a < -100), nc = nextHour(hs, i, x => x.a > 100);
-    const g = Math.round(h.c * 1000);
-    if (a > 50 && h.net < 0) return { mood: "sun",
-      msg: `Sobra sol en el campus: guardo ${fmt(Math.min(a, -h.net))} kW gratis en la batería.`,
-      tip: `<b>Qué hacer:</b> es el mejor momento para encender lo que se pueda aplazar (climatización, cargas de coches, equipos de laboratorio). Ahora la energía es solar.` };
-    if (a > 50) return { mood: "plug",
-      msg: `La red está barata y limpia (${g} g CO₂/kWh): cargo ${fmt(a)} kW para usarlos más tarde.`,
-      tip: nd ? `<b>Qué hacer:</b> buen momento para consumir. Esta energía la devolveré al campus a las ${nd.h}:00, cuando la red sea más cara y más sucia.` : `<b>Qué hacer:</b> buen momento para consumir: la red está en uno de sus mejores momentos del día.` };
-    if (a < -50) return { mood: "bolt",
-      msg: `Hora cara y sucia (${fmt(h.p, 3)} €/kWh, ${g} g CO₂/kWh): descargo ${fmt(-a)} kW y el campus deja de comprarlos a la red.`,
-      tip: `<b>Qué hacer:</b> si se puede, aplazad consumos grandes${nc ? ` hasta las ${nc.h}:00` : ""}. Cada kWh que no se pide ahora evita el momento más contaminante.` };
-    return { mood: "moon",
-      msg: soc > 60 && nd ? `Espero con la batería al ${fmt(soc)} %: la descargaré a las ${nd.h}:00, cuando la red esté más cara.` :
-           nc ? `Espero: a las ${nc.h}:00 la red estará más barata y limpia para cargar.` : `Espero: ahora no compensa ni cargar ni descargar.`,
-      tip: `<b>Qué hacer:</b> consumo normal. La diferencia de precio y CO₂ con las próximas horas no compensa las pérdidas de la batería (10 % por ciclo).` };
+    switch (kind(h)) {
+      case "sun": return { state: "Cargando con sol",
+        msg: `Sobra sol en el campus: guardo ${fmt(Math.min(a, -h.net))} kW gratis.`,
+        tip: `<b>Qué hacer:</b> encended ahora lo que se pueda aplazar. La energía es solar y no cuesta nada.` };
+      case "grid": return { state: "Cargando de la red",
+        msg: `La red está barata y limpia (${g} g CO₂/kWh): cargo ${fmt(a)} kW.`,
+        tip: nd ? `<b>Qué hacer:</b> buen momento para consumir. Devolveré esta energía al campus a las ${nd.h}:00.` : `<b>Qué hacer:</b> buen momento para consumir.` };
+      case "dis": return { state: "Descargando: el campus no compra a la red",
+        msg: `Hora cara y con más CO₂ (${g} g/kWh): descargo ${fmt(-a)} kW para el campus.`,
+        tip: `<b>Qué hacer:</b> si se puede, aplazad consumos grandes${nc ? ` hasta las ${nc.h}:00` : ""}.` };
+      default: return { state: "Esperando",
+        msg: soc > 60 && nd ? `Espero con la batería al ${fmt(soc)} %: descargaré a las ${nd.h}:00.` :
+             nc ? `Espero: a las ${nc.h}:00 será mejor momento para cargar.` : `Espero: ahora no compensa mover energía.`,
+        tip: `<b>Qué hacer:</b> consumo normal. La diferencia con las próximas horas no compensa el 10 % que se pierde en cada ciclo.` };
+    }
   }
 
   let typing = 0;
@@ -292,7 +394,7 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
     const el = $("msg"), my = ++typing;
     if (reduce) { el.textContent = text; return; }
     el.textContent = ""; let k = 0;
-    const step = () => { if (my !== typing) return; el.textContent = text.slice(0, ++k); if (k < text.length) setTimeout(step, 14); };
+    const step = () => { if (my !== typing) return; el.textContent = text.slice(0, ++k); if (k < text.length) setTimeout(step, 24); };
     step();
   }
 
@@ -301,81 +403,78 @@ footer { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
     const el = $(id), from = shown[id] ?? 0; shown[id] = to;
     if (reduce) { el.textContent = fmt(to, d) + suffix; return; }
     const t0 = performance.now();
-    const tick = (t) => { const p = Math.min(1, (t - t0) / 450), e = 1 - Math.pow(1 - p, 3); el.textContent = fmt(from + (to - from) * e, d) + suffix; if (p < 1) requestAnimationFrame(tick); };
+    const tick = (t) => { const p = Math.min(1, (t - t0) / 700), e = 1 - Math.pow(1 - p, 3); el.textContent = fmt(from + (to - from) * e, d) + suffix; if (p < 1) requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
   }
 
-  let lastMood = "";
-  function spark(kind) {
-    if (reduce) return;
-    const bot = $("bot");
-    for (let k = 0; k < 3; k++) {
-      const s = document.createElement("div"); s.className = "spark"; s.innerHTML = ICON[kind === "bolt" ? "bolt" : "sun"];
-      s.style.left = (40 + Math.random() * 70) + "px"; s.style.top = (kind === "bolt" ? 70 : 120) + "px";
-      s.style.setProperty("--dx", (Math.random() * 40 - 20) + "px"); s.style.animationDelay = (k * 0.15) + "s";
-      bot.appendChild(s); setTimeout(() => s.remove(), 2200);
-    }
+  function floaty(text) {
+    const f = $("floaty"); f.textContent = text; f.classList.remove("go"); void f.getBoundingClientRect(); if (text) f.classList.add("go");
   }
 
+  const MOUTH = { sun: "M163 121q12 11 24 0", grid: "M166 122q9 7 18 0", dis: "M166 125q9 -3 18 0", idle: "M169 124h12" };
+
   function render() {
-    const w = DATA.weeks[wk], hs = w.hours, h = hs[hour];
+    const w = DATA.weeks[wk], hs = w.hours, h = hs[hour], k = kind(h);
     $("hour").value = hour;
-    $("clock").textContent = `${h.d} ${h.dd} · ${String(h.h).padStart(2, "0")}:00`;
-    $("who").textContent = `Volta · ${h.d} ${h.dd} · ${String(h.h).padStart(2, "0")}:00`;
+    const when = `${h.d} ${h.dd} · ${String(h.h).padStart(2, "0")}:00`;
+    $("clock").textContent = when; $("who").textContent = "Volta · " + when;
     const m = message(hs, hour);
-    type(m.msg); $("tip").innerHTML = m.tip;
-    if (m.mood !== lastMood) { const md = $("mood"); md.innerHTML = ICON[m.mood]; md.classList.remove("pop"); void md.offsetWidth; md.classList.add("pop"); lastMood = m.mood; }
-    if (m.mood === "sun" || m.mood === "bolt") spark(m.mood);
-    $("mouth").setAttribute("d", m.mood === "bolt" ? "M64 103q11 12 22 0" : m.mood === "moon" ? "M66 106h18" : "M64 105q11 9 22 0");
+    type(m.msg); $("tip").innerHTML = m.tip; $("state").textContent = m.state;
+    const scene = $("scene");
+    scene.classList.remove("st-sun", "st-grid", "st-dis", "st-idle"); scene.classList.add("st-" + k);
+    const cs = hs.map(x => x.c), cmin = Math.min(...cs), cmax = Math.max(...cs);
+    scene.style.setProperty("--smoke-level", (0.15 + 0.85 * (h.c - cmin) / Math.max(1e-6, cmax - cmin)).toFixed(2));
+    scene.style.setProperty("--imp", h.g > 20 ? Math.min(1, 0.25 + h.g / 1500).toFixed(2) : "0");
+    $("mouth").setAttribute("d", MOUTH[k]);
+    floaty(k === "dis" ? `−${fmt(h.co2, 0)} kg CO₂` : k === "sun" ? `+${fmt(h.sol)} kWh de sol` : "");
     const pct = h.soc / 60;
     $("fill").style.transform = `scaleY(${Math.max(0.02, pct / 100)})`;
     $("k-socbar").style.width = pct + "%";
     let co2 = 0, eur = 0, sol = 0;
     for (let i = 0; i <= hour; i++) { co2 += hs[i].co2; eur += hs[i].eur; sol += hs[i].sol; }
     count("k-soc", pct, " %"); count("k-co2", co2); count("k-eur", eur); count("k-sol", sol);
-    const svg = $("chart");
-    const cx = xOf(hour);
-    const cur = $("cur"), dot = $("dot");
+    const cx = xOf(hour), cur = $("cur"), dot = $("dot");
     if (cur) { cur.style.transform = `translateX(${cx}px)`; dot.style.transform = `translate(${cx}px, ${yP(h.a)}px)`; }
-    svg.querySelectorAll(".b").forEach(b => b.classList.toggle("future", +b.dataset.i > hour));
+    $("chart").querySelectorAll(".b").forEach(b => b.classList.toggle("future", +b.dataset.i > hour));
     const strip = $("strip"); strip.innerHTML = "";
-    for (let k = 0; k < 24; k++) {
-      const x = hs[Math.min(167, hour + k)], c = document.createElement("div");
-      c.className = "cell" + (x.a > 50 ? " c" : x.a < -50 ? " d" : "") + (k === 0 ? " now" : "");
-      c.title = `${x.h}:00 · ${x.a > 50 ? "carga " + fmt(x.a) : x.a < -50 ? "descarga " + fmt(-x.a) : "espera"} kW`;
-      c.innerHTML = `<span class="${k % 6 === 0 ? "show" : ""}">${x.h}h</span>`;
+    for (let j = 0; j < 24; j++) {
+      const x = hs[Math.min(167, hour + j)], c = document.createElement("div"), kk = kind(x);
+      c.className = "cell" + (kk === "sun" ? " s" : kk === "grid" ? " c" : kk === "dis" ? " d" : "") + (j === 0 ? " now" : "");
+      c.title = `${x.h}:00 · ${kk === "sun" ? "carga con sol" : kk === "grid" ? "carga de la red" : kk === "dis" ? "descarga" : "espera"} ${kk === "idle" ? "" : fmt(Math.abs(x.a)) + " kW"}`;
+      c.innerHTML = `<span class="${j % 6 === 0 ? "show" : ""}">${x.h}h</span>`;
       strip.appendChild(c);
     }
-    const day = hs.slice(Math.floor(hour / 24) * 24, Math.floor(hour / 24) * 24 + 24);
+    const d0 = Math.floor(hour / 24) * 24, day = hs.slice(d0, d0 + 24);
     const avgP = day.reduce((s, x) => s + x.p, 0) / day.length, avgC = day.reduce((s, x) => s + x.c, 0) / day.length;
     $("why").innerHTML = `
       <div class="fact"><div class="t">Precio ahora</div><div class="n">${fmt(h.p, 3)} €/kWh</div><div class="s">${h.p > avgP ? "por encima" : "por debajo"} de la media del día (${fmt(avgP, 3)})</div></div>
-      <div class="fact"><div class="t">CO₂ de la red</div><div class="n">${fmt(h.c * 1000)} g/kWh</div><div class="s">${h.c > avgC ? "más sucia" : "más limpia"} que la media del día (${fmt(avgC * 1000)})</div></div>
-      <div class="fact"><div class="t">Sol frente a consumo</div><div class="n">${fmt(h.pv)} / ${fmt(h.load)} kW</div><div class="s">${h.net < 0 ? "sobran " + fmt(-h.net) + " kW de sol" : "la red aporta " + fmt(h.net) + " kW antes de la batería"}</div></div>`;
+      <div class="fact"><div class="t">CO₂ de la red</div><div class="n">${fmt(h.c * 1000)} g/kWh</div><div class="s">${h.c > avgC ? "más" : "menos"} que la media del día (${fmt(avgC * 1000)})</div></div>
+      <div class="fact"><div class="t">Sol y consumo</div><div class="n">${fmt(h.pv)} / ${fmt(h.load)} kW</div><div class="s">${h.net < 0 ? "sobran " + fmt(-h.net) + " kW de sol" : "faltan " + fmt(h.net) + " kW antes de la batería"}</div></div>`;
   }
 
-  function setWeek(i, keepHour) {
+  function setWeek(i) {
     wk = i;
-    if (!keepHour) { const hs0 = DATA.weeks[i].hours; const k = hs0.findIndex(x => x.a > 50 && x.net < 0); hour = k >= 0 ? k : 13; }
+    const hs0 = DATA.weeks[i].hours, k0 = hs0.findIndex(x => x.a > 50 && x.net < 0); hour = k0 >= 0 ? k0 : 13;
     document.querySelectorAll("#weeks button").forEach((b, k) => b.setAttribute("aria-pressed", k === i ? "true" : "false"));
     const w = DATA.weeks[i];
-    $("wk-title").textContent = `${w.label}: score ${fmt(w.score, 2)} (cota con información perfecta ${fmt(w.pf, 2)})`;
-    $("foot").textContent = `Semanas de ejemplo del año de entrenamiento oficial (data/train), simuladas con las reglas del modo difícil. Decisiones del agente hard_v6: solo ve 3 h de precio y CO₂, prevé el resto, y ${w.infr === 0 ? "0 infracciones" : w.infr + " infracciones"}. Esta semana: ${fmt(w.kg)} kg de CO₂ evitados, ${fmt(w.eur)} € ahorrados y ${fmt(w.solar_mwh, 1)} MWh de sol guardados de ${fmt(w.surplus_mwh, 1)} MWh que sobraban.`;
+    $("wk-title").textContent = w.label;
+    $("wk-note").textContent = `Score de la semana ${fmt(w.score, 2)}; con información perfecta, ${fmt(w.pf, 2)}. ${fmt(w.kg)} kg de CO₂ evitados y ${fmt(w.solar_mwh, 1)} MWh de sol guardados de ${fmt(w.surplus_mwh, 1)} que sobraban.`;
+    $("foot").textContent = `Semanas de ejemplo del año de entrenamiento oficial (data/train), simuladas con las reglas del modo difícil. Decisiones del agente hard_v6, que solo ve 3 horas de precio y CO₂ y prevé el resto; ${w.infr === 0 ? "0 infracciones" : w.infr + " infracciones"}.`;
     drawChart(); render();
   }
 
   function setPlay(on) {
     clearInterval(timer); timer = null;
     $("play").setAttribute("aria-pressed", on ? "true" : "false");
-    $("play").innerHTML = on ? "❚❚ Pausa" : "▶ Reproducir";
-    if (on) timer = setInterval(() => { hour = (hour + 1) % 168; render(); }, 1300);
+    $("play").textContent = on ? "❚❚ Pausa" : "▶ Reproducir";
+    if (on) timer = setInterval(() => { hour = (hour + 1) % 168; render(); }, SPEEDS[speed][1]);
   }
 
   DATA.weeks.forEach((w, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = w.label; b.onclick = () => setWeek(i); $("weeks").appendChild(b); });
+  SPEEDS.forEach(([name], i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = name; b.setAttribute("aria-pressed", i === speed ? "true" : "false");
+    b.onclick = () => { speed = i; document.querySelectorAll("#speed button").forEach((x, k) => x.setAttribute("aria-pressed", k === i ? "true" : "false")); if (timer) setPlay(true); }; $("speed").appendChild(b); });
   $("hour").addEventListener("input", (e) => { hour = +e.target.value; render(); });
   $("play").addEventListener("click", () => setPlay(!timer));
   setWeek(0);
-  setPlay(false);
-  if (!reduce) setTimeout(() => setPlay(true), 2500);
 })();
 </script>
