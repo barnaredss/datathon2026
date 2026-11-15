@@ -67,6 +67,11 @@ Read this first, then `PLAN.md` (status table at the top tells you what is done 
   compressing or expanding forecast spread, price-weight multipliers, newsvendor rule for charging.
 - The agent's dispatch by hour is close to the perfect-foresight plan; the residual is timing noise from
   forecast error (e.g. it charges at 01:00 where perfect foresight waits for 03:00–04:00).
+- hard_v4 = 23.44 public. hard_v5 adds holiday detection (weekday that behaved like a Sunday → Sunday shape
+  for the following weekdays): same as v4 on normal weeks, +0.28 on synthetic holiday weeks.
+- Sunday board: top 27.98 (16.2 kg/h avoided = our local PF kg/h). Public baseline/hour is 20 % below our
+  validation weeks; with lower demand the PF rises a lot (load ×0.8 → PF 29.0) and the agent sits at
+  90–92 % of it. Prudence-parameter sweeps on low-demand scenarios are flat (`analysis/hard_findings.md` §8).
 - Local pseudo-test profiles are fitted out of sample; always check `fallbacks=0` in the output.
 
 ## Hard rules

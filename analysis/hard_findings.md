@@ -57,3 +57,20 @@ SIN esas semanas. Batería 6.000 kWh / ±1.500 kW, solar ×12, solo 3 h de preci
 Horizonte más largo, valor terminal, planificar con menor rendimiento, colchones de carga con excedente,
 árboles en vez de regresión para precio y CO2, una regresión por (adelanto, hora), comprimir o ampliar
 la dispersión de la previsión, multiplicadores del peso del precio, regla del cuantil al cargar.
+
+## 8. Semanas de test con menos demanda (domingo)
+- En la mitad pública del test, el caso base es de 59,8 kg CO2/h y 94,2 €/h, frente a 75,0 kg/h y 127,6 €/h
+  en nuestras semanas de validación (−20 % y −26 %). Las semanas de test son la última de cada mes e
+  incluyen periodos de vacaciones (25–31 dic, final de agosto, Semana Santa).
+- Con menos demanda la cota sube mucho (el Score es relativo a un caso base más pequeño y hay más excedente
+  solar): demanda ×0,8 → cota 29,01; ×0,85 con tres semanas de festivos → cota 29,46. El agente se queda
+  en el 90–92 % de la cota en esos escenarios.
+- En esos escenarios, conocer la demanda neta real de la hora en curso vale +1,2 puntos y la de las
+  siguientes 8 h, +0,4 más. Por separado, conocer solo la demanda o solo la solar de la hora vale +0,3–0,4.
+- hard_v5 detecta los laborables que se comportan como festivos (la demanda de 10–15 h apenas supera a
+  la nocturna) y prevé los días siguientes con la forma de un domingo: +0,28 en semanas de festivos
+  simuladas, sin cambio en semanas normales (20,80) y +0,01 en el año completo.
+- Ajustar los márgenes de prudencia para escenarios de baja demanda no mejora nada (barrido plano).
+- El mejor equipo (27,98 público) evita 16,2 kg/h, lo mismo que nuestra cota de información perfecta
+  en las semanas de validación (16,0 kg/h). Nosotros, 13,1 kg/h con hard_v3. No conocemos la cota del
+  test público; con un caso base un 20 % menor podría estar en torno a 28–29.

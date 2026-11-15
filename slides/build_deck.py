@@ -11,7 +11,7 @@ from PIL import Image
 TEAM = "hackers la l"
 MEMBERS = "Alexander Hall Parrilla · Oscar Senesi Aladjem"
 LB = {"score": "6,43", "dco2": "5,96 %", "dcoste": "7,52 %", "infr": "0",
-      "hard": "23,29"}   # <- actualizar "hard" con el mejor score público del modo difícil
+      "hard": "23,44"}   # <- actualizar "hard" con el mejor score público del modo difícil
 
 SLIDES = [
  {"kind": "cover",
@@ -93,7 +93,7 @@ SLIDES = [
   "figure": "hard_horas.png",
   "bullets": ["Precio y CO2: una regresión por cada hora de adelanto.",
               "Demanda: última medida por perfil semanal. Solar: árboles.",
-              "Cada semana arranca con las 48 h previas del entrenamiento.",
+              "Arranca con las 48 h previas y detecta días festivos.",
               "Descarga prudente: regla del cuantil según el valor de la energía."],
   "notes": "Mantenemos el programa lineal y le damos previsiones. La consigna de cada hora es fija y la demanda neta no se conoce, así que descargamos hasta un cuantil que depende de cuánto vale la energía guardada. La figura compara nuestro despacho medio por hora con el del plan que conoce el futuro. Fuente: analysis/hard_findings.md, puntos 4 y 5."},
  {"kind": "optimal",

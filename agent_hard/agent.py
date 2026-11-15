@@ -42,6 +42,8 @@ class BatteryAgent:
     BLOCK_HOURS = 168       # el test son semanas completas
     SHRINK = 1.0            # <1 comprime la previsión de la señal hacia su media (horas no conocidas)
     LAMBDA_MULT = 1.0       # multiplicador del peso del precio
+    USE_HOLIDAY = True      # detecta laborables con comportamiento de festivo
+    HOL_POS = 0.3           # posición del umbral entre el cociente de un domingo (0) y el de un laborable (1)
     USE_PV_GBM = True       # previsión de la solar de la hora actual con árboles
     PV_K0_FACTOR = 1.05     # factor sobre esa previsión
     NEWSVENDOR = True       # ajusta la consigna de la hora actual a la incertidumbre de la demanda neta
@@ -73,6 +75,11 @@ class BatteryAgent:
         self.p_pv = np.asarray(p["pv"], dtype=float)           # [mes][hora], kW sin escalar
         self.p_load = np.asarray(p["load_week"], dtype=float)  # [día*24 + hora]
         self.p_load_month = np.asarray(p["load_month"], dtype=float)
+        pl = self.p_load
+        wk_ratio = np.mean([pl[d * 24 + 10:d * 24 + 16].mean() / pl[d * 24:d * 24 + 6].mean() for d in range(5)])
+        su_ratio = pl[144 + 10:144 + 16].mean() / pl[144:150].mean()
+        self._hol, self._hol_n = False, None
+        self.hol_thr = su_ratio + self.HOL_POS * (wk_ratio - su_ratio)   # umbral laborable / festivo
         rg = p.get("ridge")
         self.use_ridge = bool(rg) and self.USE_RIDGE
         if self.use_ridge:
@@ -315,6 +322,32 @@ class BatteryAgent:
             s += val[i]
         return max(0.0, s)
 
+    def _holiday_mode(self):
+        """True si el último día laborable observado se comportó como un festivo (campus cerrado).
+
+        En un laborable normal la demanda de 10 a 15 h es claramente mayor que la nocturna; en
+        festivos y fines de semana apenas sube. Se compara ese cociente con el punto medio entre el
+        de un laborable y el de un domingo del perfil semanal de entrenamiento. Mientras el último
+        laborable observado parezca festivo, los laborables siguientes se prevén con forma de domingo.
+        """
+        days = {}
+        for r in range(max(self.hist_start, self.n - 72), self.n):
+            if r not in self.load:
+                continue
+            t = self.ts + timedelta(hours=r - self.n)
+            if t.weekday() >= 5:
+                continue
+            dd = days.setdefault(t.date(), ([], []))
+            if 10 <= t.hour <= 15:
+                dd[0].append(self.load[r])
+            elif t.hour <= 5:
+                dd[1].append(self.load[r])
+        for day in sorted(days, reverse=True):
+            mid, night = days[day]
+            if len(mid) >= 4 and night:
+                return (sum(mid) / len(mid)) / max(1.0, sum(night) / len(night)) < self.hol_thr
+        return False
+
     def _net_load(self, m):
         """Previsión de demanda neta (demanda - solar) de las filas n .. n+m-1, en kW."""
         end = self._block_end()
@@ -322,14 +355,23 @@ class BatteryAgent:
         last = self.n - 1 if self.n > 0 else 0
         have_last = last in self.load and (last >= self.hist_start or self.n == 0)
         mean_week = float(self.p_load.mean())
+        if self.USE_HOLIDAY and (self._hol_n is None or self._new_block or self.ts.hour == 16
+                                 or self.n - self._hol_n >= 24):
+            self._hol, self._hol_n = self._holiday_mode(), self.n   # se recalcula una vez al día (a las 16 h)
+        hol = self.USE_HOLIDAY and self._hol
         net = np.empty(m)
         for k in range(m):
             r = self.n + k
             mo, _, h, widx = self._attrs(r)
             clim = self.p_load_month[mo] * self.p_load[widx] / mean_week
             if r < end and have_last:
+                if hol and widx < 120:          # laborable que se comportará como festivo: forma de domingo
+                    widx = 144 + h
                 tl = self.ts + timedelta(hours=last - self.n)
-                ref = self.p_load[tl.weekday() * 24 + tl.hour]
+                wl = tl.weekday()
+                if hol and wl < 5:
+                    wl = 6
+                ref = self.p_load[wl * 24 + tl.hour]
                 load = self.load[last] * self.p_load[widx] / ref
                 y = r - 24
                 if self.BETA_LOAD > 0 and y >= self.hist_start and y in self.load:

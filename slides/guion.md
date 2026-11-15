@@ -6,7 +6,7 @@ Respuestas a preguntas: `slides/qa.md`.
 
 ## Antes de empezar
 
-1. Si habéis subido un agente mejor al modo difícil, cambiad `"hard": "23,29"` al principio de
+1. Si hard_v5 mejora el 23,44 del modo difícil, cambiad `"hard": "23,44"` al principio de
    `slides/build_deck.py` por vuestro mejor score público y regenerad:
    `./.venv/Scripts/python.exe slides/build_deck.py`
 2. Reparto sugerido: **Alexander** diapositivas 1–9 (problema, datos, idea, modo estándar);
@@ -26,7 +26,7 @@ Respuestas a preguntas: `slides/qa.md`.
 | Horas con demanda neta > 500 kW | 99,5 % |
 | Correlación precio–CO2 | 0,58 |
 | Peso del precio (λ) | 0,2593 kg por euro ≈ 3.900 € por tonelada de CO2 |
-| Modo difícil, score público | 23,29 (o el que hayáis subido) |
+| Modo difícil, score público | 23,44 (hard_v4; actualizad si hard_v5 sube) |
 | Modo difícil, distancia al óptimo | 93,3 % (20,80 de 22,28) |
 | Modo difícil con precio y CO2 perfectos | 21,44 (96 %) |
 | Impacto anual (batería actual) | 42 t CO2 y 91.000 € |
@@ -102,7 +102,8 @@ de lo que el campus consume, y lo que sobra se pierde.»
 **Idea: mismo optimizador, tres previsiones, y prudencia.**
 «Mantenemos el mismo programa lineal y le damos tres previsiones. El precio y el CO2, con una regresión
 por cada hora de adelanto. La demanda, con la última medida y el perfil semanal. Y la solar de la hora
-en curso, con un modelo de árboles. Como la consigna es fija durante la hora y la demanda real no se
+en curso, con un modelo de árboles. Si un laborable se comporta como un festivo, prevemos los días
+siguientes con forma de domingo. Como la consigna es fija durante la hora y la demanda real no se
 conoce, descargamos con prudencia: más cuando la hora vale mucho, menos cuando es dudosa. En la figura,
 el verde es nuestro agente y el azul el plan que conoce el futuro: operan casi igual.»
 
@@ -111,8 +112,8 @@ el verde es nuestro agente y el azul el plan que conoce el futuro: operan casi i
 «Aquí está cada mejora. Con perfiles medios, 88 % de la cota. Con la regresión, 91. Con la prudencia al
 descargar, 93. Y para saber qué falta, dimos al agente información perfecta por partes: con el precio
 y el CO2 reales llegaría al 96 %; con la demanda de la hora en curso, también al 96. Esas son las dos
-cosas que no se pueden saber, y valen lo mismo. En el leaderboard público, 23,29.»
-*(Si habéis subido hard_v4, decid vuestro número.)*
+cosas que no se pueden saber, y valen lo mismo. En el leaderboard público, 23,44.»
+*(Si hard_v5 ha subido más, decid vuestro número.)*
 
 ### 13. Lo que probamos y descartamos (5:30 – 5:50) ⏭
 **Idea: decidimos con números, y lo que no funcionó lo decimos.**
